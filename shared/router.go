@@ -50,7 +50,6 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		u_id = u.(uint64)
 	}
 	if u_id == 0 {
-		log.Println("regen?")
 		u_id, _ = Regen(req)
 		if u_id > 0 {
 			sess.Values["id"] = u_id

@@ -18,7 +18,7 @@ type Post struct {
 	UId uint64
 	Username string
 	Post string
-	Posts []Post
+	Posts []*Post
 	Timestamp uint64
 	FTimestamp	string
 }

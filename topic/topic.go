@@ -24,24 +24,27 @@ func GetById(id uint64) (*Topic, error) {
 	keys[1] = fmt.Sprintf("topic:%d:title", uint64(id))
 	fs, rerr := shared.RedisClient.Mget(keys...)
 	if rerr != nil {
-		log.Println("AT 1")
 		return nil, rerr
 	}
 	pse, rerr := shared.RedisClient.Zrevrangebyscore(fmt.Sprintf("topic:%d:posts", id), 10000, 800, "limit", "0", "10")
 	if rerr != nil {
-		log.Println("AT 2")
 		return nil, rerr
 	}
-	var posts []post.Post
-	for _, pe := range pse.IntArray() {
-		p, err := post.GetById(uint64(pe), id, 5)
-		if err != nil {
-			log.Println("AT 3")
-			return nil, err
+	res := pse.IntArray()
+	l := len(res)
+	var posts []*post.Post
+	if l > 0 {
+		posts = make([]*post.Post, l)
+		for i, pe := range res {
+			p_id := uint64(pe)
+			p, err := post.GetById(p_id, id, 5)
+			if err != nil {
+				log.Println("err 5", err)
+				return nil, err
+			}
+			posts[i] = p
 		}
-		posts = append(posts, p)
 	}
-
 	return &Topic{
 		Id: id,
 		DId: uint64(fs.Elems[0].Elem.Int64()),

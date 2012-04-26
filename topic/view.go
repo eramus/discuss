@@ -23,7 +23,7 @@ type Topic struct {
 	DId uint64
 	Uri string
 	Title string
-	Posts []post.Post
+	Posts []*post.Post
 	Comments int
 	LastPost string
 	LastPostId uint64

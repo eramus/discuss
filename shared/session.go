@@ -2,10 +2,12 @@ package shared
 
 import (
 	"fmt"
+//	"log"
 	"net/http"
 	"sync"
 	"strconv"
 
+	"code.google.com/p/gorilla/context"
 	"code.google.com/p/gorilla/securecookie"
 	"code.google.com/p/gorilla/sessions"
 	"github.com/dchest/passwordhash"
@@ -23,15 +25,10 @@ func getSession(r *http.Request, key string) (*sessions.Session, error) {
 	return s, nil
 }
 
-func visited(s *sessions.Session) error {
-	key := "session:" + s.ID
+func visited(s *sessions.Session) {
 	sessionMutex.Lock()
 	defer sessionMutex.Unlock()
-	_, rerr := RedisClient.Expire(key, int64(sessionExpire))
-	if rerr != nil {
-		return rerr
-	}
-	return nil
+	RedisClient.Expire("session:" + s.ID, int64(sessionExpire))
 }
 
 func killSession(r *http.Request, w http.ResponseWriter, s *sessions.Session) error {
@@ -83,6 +80,7 @@ func Remember(r *http.Request, w http.ResponseWriter, id uint64) error {
 		HttpOnly: rememberOpts.HttpOnly,
 	}
 	http.SetCookie(w, cookie)
+	context.DefaultContext.Clear(r)
 	return nil
 }
 
@@ -155,34 +153,42 @@ func (s *redisStore) Get(r *http.Request, name string) (*sessions.Session, error
 //
 // See CookieStore.New().
 func (s *redisStore) New(r *http.Request, name string) (*sessions.Session, error) {
-	session := sessions.NewSession(s, name)
-	session.IsNew = true
+	var c *http.Cookie
 	var err error
-	if c, errCookie := r.Cookie(name); errCookie == nil {
-		err = securecookie.DecodeMulti(name, c.Value, &session.ID, s.Codecs...)
-		if err == nil {
-			err = s.load(session)
-			if err == nil {
-				session.IsNew = false
-			}
+	c, err = r.Cookie(name)
+	if err != nil && err != http.ErrNoCookie {
+		return nil, err
+	}
+	var session *sessions.Session
+	session = sessions.NewSession(s, name)
+	session.IsNew = true
+	
+	if c != nil {
+		securecookie.DecodeMulti(name, c.Value, &session.ID, s.Codecs...)
+		s.load(session)
+		if len(session.Values) > 0 {
+			session.IsNew = false
 		}
 	}
-	return session, err
+	return session, nil
 }
 
 // Save adds a single session to the response.
 func (s *redisStore) Save(r *http.Request, w http.ResponseWriter, session *sessions.Session) error {
+	var err error
 	if session.ID == "" {
-		i, err := NoeqClient.GenOne()
+		var i uint64
+		i, err = NoeqClient.GenOne()
 		if err != nil {
 			return err
 		}
 		session.ID = strconv.FormatUint(i, 10)
 	}
-	if err := s.save(session); err != nil {
+	if err = s.save(session); err != nil {
 		return err
 	}
-	encoded, err := securecookie.EncodeMulti(session.Name(), session.ID, s.Codecs...)
+	var encoded string
+	encoded, err = securecookie.EncodeMulti(session.Name(), &session.ID, s.Codecs...)
 	if err != nil {
 		return err
 	}
@@ -200,6 +206,7 @@ func (s *redisStore) Save(r *http.Request, w http.ResponseWriter, session *sessi
 		HttpOnly: options.HttpOnly,
 	}
 	http.SetCookie(w, cookie)
+	context.DefaultContext.Clear(r)
 	return nil
 }
 
@@ -212,7 +219,7 @@ func (s *redisStore) save(session *sessions.Session) error {
 		// Don't need to write anything.
 		return nil
 	}
-	encoded, err := securecookie.EncodeMulti(session.Name(), session.Values, s.Codecs...)
+	encoded, err := securecookie.EncodeMulti(session.Name(), &session.Values, s.Codecs...)
 	if err != nil {
 		return err
 	}

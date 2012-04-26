@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime"
 	"strings"
 
 	"code.google.com/p/gorilla/sessions"
@@ -75,6 +76,7 @@ type PostDoc struct {
 }
 
 func init() {
+	runtime.GOMAXPROCS(2)
 	var err error
 	NoeqClient, err = noeq.New("", ":4444")
 	if err != nil {

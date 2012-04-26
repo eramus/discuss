@@ -117,7 +117,6 @@ func parsePosts(sr *solr.SolrResponse) (docs []shared.PostDoc) {
 			if rerr != nil {
 				return
 			}
-			log.Println("DOC:",doc)
 			d := shared.PostDoc {
 				Id: uint64(id),
 				TId: uint64(fs.Elems[1].Elem.Int64()),

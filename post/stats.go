@@ -2,7 +2,7 @@ package post
 
 import (
 	"fmt"
-	"log"
+//	"log"
 
 	"discuss/shared"
 )
@@ -38,7 +38,7 @@ func BuryPost(u_id, p_id uint64) {
 }
 
 func scorePost(ids score) {
-	log.Println("score post:", ids)
+//	log.Println("score post:", ids)
 	keys := make([]string, 2)
 	keys[0] = fmt.Sprintf("post:%d:t_id", ids.pid)
 	keys[1] = fmt.Sprintf("post:%d:p_id", ids.pid)
@@ -65,7 +65,6 @@ func scorePost(ids score) {
 	added, _ := shared.RedisClient.Sadd(key, ids.uid)
 	if !added {
 		// already voted
-		log.Println("already voted" )
 		return
 	}
 	shared.RedisClient.Sadd(fmt.Sprintf("user:%d:voted:topic:%d", ids.uid, t_id), ids.pid)

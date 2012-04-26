@@ -36,13 +36,11 @@ func Subscribe(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl 
 	}
 	if added {
 		key = fmt.Sprintf("discussion:%d:subscribed", id)
-		log.Println("SUBSCRIBED:", id, "KEY:", key)
-		res, rerr := shared.RedisClient.Incr(key)
+		_, rerr := shared.RedisClient.Incr(key)
 		if rerr != nil {
 			log.Println("redis err:", rerr)
 			return
 		}
-		log.Println("NEW:", res)
 	}
 	redirect = "/discuss/" + uri
 	return
@@ -71,19 +69,18 @@ func Unsubscribe(r *http.Request, sess *sessions.Session) (body *shared.Body, tp
 	}
 	if removed {
 		key = fmt.Sprintf("discussion:%d:subscribed", id)
-		res, rerr := shared.RedisClient.Decr(key)
+		_, rerr := shared.RedisClient.Decr(key)
 		if rerr != nil {
 			log.Println("redis err:", rerr)
 			return
 		}
-		log.Println("NEW:", res)
 	}
 	redirect = "/discuss/" + uri
 	return
 }
 
 func AddDiscussion(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
-	log.Println("route: add discussion")
+//	log.Println("route: add discussion")
 	var u_id = sess.Values["id"].(uint64)
 	if r.Method != "POST" {
 		body, tpl = AddForm(r)
@@ -101,7 +98,7 @@ func AddDiscussion(r *http.Request, sess *sessions.Session) (body *shared.Body, 
 }
 
 func ViewDiscussion(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
-	log.Println("route: view discussion")
+//	log.Println("route: view discussion")
 	var u_id uint64
 	if _, ok := sess.Values["id"]; ok {
 		u_id = sess.Values["id"].(uint64)

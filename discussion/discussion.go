@@ -123,14 +123,14 @@ func Add(r *http.Request, u_id uint64) (uint64, error) {
 	return id, nil
 }
 
-func Topics(id uint64) ([]topic.Topic, error) {
+func Topics(id uint64) ([]*topic.Topic, error) {
 	ts, err := RedisClient.Zrevrangebyscore(fmt.Sprintf("discussion:%d:topics", id), 10000, 800, "limit", "0", "10")
 	if err != nil {
 		return nil, err
 	}
-	var topics []topic.Topic
+	var topics = make([]*topic.Topic, len(ts.Elems))
 	var keys = make([]string, 6)
-	for _, e := range ts.Elems {
+	for i, e := range ts.Elems {
 		t_id := uint64(e.Elem.Int64())
 
 		keys[0] = fmt.Sprintf("topic:%d:title", t_id)
@@ -143,7 +143,7 @@ func Topics(id uint64) ([]topic.Topic, error) {
 		if rerr != nil {
 			return nil, rerr
 		}
-		t := topic.Topic{
+		t := &topic.Topic{
 			Id: t_id,
 			DId: id,
 			Title: fs.Elems[0].Elem.String(),
@@ -151,7 +151,7 @@ func Topics(id uint64) ([]topic.Topic, error) {
 			LastPostId: uint64(fs.Elems[2].Elem.Int64()),
 			NumPosts: fs.Elems[5].Elem.Int64(),
 		}
-		topics = append(topics, t)
+		topics[i] = t
 	}
 	return topics, nil
 }

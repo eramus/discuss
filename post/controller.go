@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"html"
 	"html/template"
-	"log"
+//	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -15,7 +15,7 @@ import (
 )
 
 func Bump(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
-	log.Println("route: bump post")
+//	log.Println("route: bump post")
 	var u_id = sess.Values["id"].(uint64)
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
 	if len(parts) < 3 {
@@ -31,7 +31,6 @@ func Bump(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *temp
 	voted, rerr := shared.RedisClient.Sismember(key, u_id)
 	if rerr != nil || voted {
 		// already voted
-		log.Println("already voted:" )
 		return
 	}
 	go BumpPost(u_id, id)
@@ -39,7 +38,7 @@ func Bump(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *temp
 }
 
 func Bury(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
-	log.Println("route: bury post")
+//	log.Println("route: bury post")
 	var u_id = sess.Values["id"].(uint64)
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
 	if len(parts) < 3 {
@@ -55,7 +54,6 @@ func Bury(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *temp
 	voted, rerr := shared.RedisClient.Sismember(key, u_id)
 	if rerr != nil || voted {
 		// already voted
-		log.Println("already voted:" )
 		return
 	}
 	go BuryPost(u_id, id)

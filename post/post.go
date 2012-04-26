@@ -12,39 +12,40 @@ import (
 	. "discuss/shared"
 )
 
-func GetById(id, t_id uint64, lvl int) (Post, error) {
+func GetById(id, t_id uint64, lvl int) (*Post, error) {
 	keys := make([]string, 3)
 	keys[0] = fmt.Sprintf("post:%d:post", uint64(id))
 	keys[1] = fmt.Sprintf("post:%d:u_id", uint64(id))
 	keys[2] = fmt.Sprintf("post:%d:ts", uint64(id))
 	fs, rerr := RedisClient.Mget(keys...)
 	if rerr != nil {
-		return Post{}, rerr
+		return nil, rerr
 	}
 	ue, rerr := RedisClient.Get(fmt.Sprintf("user:%d:username", uint64(fs.Elems[1].Elem.Int64())))
 	if rerr != nil {
-		return Post{}, rerr
+		return nil, rerr
 	}
 	ple, rerr := RedisClient.Zcount(fmt.Sprintf("post:%d:posts", id), 800, 10000)
 	if rerr != nil {
-		return Post{}, rerr
+		return nil, rerr
 	}
-	var posts []Post
+	var posts []*Post
 	if ple > 0 && lvl > 0 {
 		pse, rerr := RedisClient.Zrevrangebyscore(fmt.Sprintf("post:%d:posts", id), 10000, 800, "limit", "0", "10")
 		if rerr != nil {
-			return Post{}, rerr
+			return nil, rerr
 		}
 		lvl--
-		for _, p_id := range pse.Elems {
+		posts = make([]*Post, len(pse.Elems))
+		for i, p_id := range pse.Elems {
 			ps, err := GetById(uint64(p_id.Elem.Int64()), t_id, lvl)
 			if err != nil {
-				return Post{}, err
+				return nil, err
 			}
-			posts = append(posts, ps)
+			posts[i] = ps
 		}
 	}
-	return Post{
+	return &Post{
 		Id: id,
 		TId: t_id,
 		UId: uint64(fs.Elems[1].Elem.Int64()),

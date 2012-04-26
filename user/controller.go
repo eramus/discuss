@@ -3,7 +3,7 @@ package user
 import (
 	"html"
 	"html/template"
-	"log"
+//	"log"
 	"net/http"
 	"strings"
 
@@ -65,7 +65,7 @@ func Login(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *tem
 }
 
 func Logout(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
-	log.Println("route: logout")
+//	log.Println("route: logout")
 	sess.Values["id"] = uint64(0)
 	redirect = "/"
 	fs := sess.Flashes("last")

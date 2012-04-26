@@ -20,7 +20,7 @@ type List struct {
 	Id		uint64
 	Uri		string
 	Title		string
-	Topics	[]topic.Topic
+	Topics	[]*topic.Topic
 }
 
 type Form struct {

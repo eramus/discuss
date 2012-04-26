@@ -63,10 +63,9 @@ func addThreadView(ids threadView) {
 }
 
 func updateViews(done chan bool) {
-	log.Println("update thread views")
+//	log.Println("update thread views")
 	ds, _ := shared.RedisClient.Keys("discussion:*:views")
 	if len(ds) > 0 {
-		log.Println("have views")
 		var (
 			err error
 			viewMap = make(map[uint64]int64)
@@ -78,18 +77,15 @@ func updateViews(done chan bool) {
 		)
 		for _, key := range ds {
 			l, _ = shared.RedisClient.Llen(key)
-			log.Println("num of dis:", l)
 			if l == 0 {
 				continue
 			}
 			if l < runUpdate {
 				e, _ := shared.RedisClient.Get(key + ":updated")
 				if e != nil && now - e.Int64() < forceUpdate {
-					log.Println("skipping:", key)
 					continue
 				}
 			}
-			log.Println("update views for:", key)
 			// rename, get & del
 			newKey = key + ":updating"
 			err = shared.RedisClient.Rename(key, newKey)
@@ -134,7 +130,6 @@ func BuryThread(u_id, t_id, d_id uint64) {
 }
 
 func scoreThread(ids score) {
-	log.Println("bump:", ids)
 	var to, from string
 	if ids.up {
 		to, from = "bumped", "buried"
@@ -143,17 +138,14 @@ func scoreThread(ids score) {
 	}
 	// try to add user
 	key := fmt.Sprintf("topic:%d:%s", ids.tid, to)
-	log.Println("add to:", key)
 	added, _ := shared.RedisClient.Sadd(key, ids.uid)
 	if !added {
 		// already voted
-		log.Println("already voted:" )
 		return
 	}
 	shared.RedisClient.Sadd(fmt.Sprintf("user:%d:voted:discussion:%d", ids.uid, ids.did), ids.tid)
 	// try to remove from other
 	key = fmt.Sprintf("topic:%d:%s", ids.tid, from)
-	log.Println("remove from:", key)
 	removed, _ := shared.RedisClient.Srem(key, ids.uid)
 	var move float64 = 1
 	if removed {

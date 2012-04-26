@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"html"
 	"html/template"
-	"log"
+//	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -15,7 +15,7 @@ import (
 )
 
 func Bump(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
-	log.Println("route: bump topic")
+//	log.Println("route: bump topic")
 	var u_id = sess.Values["id"].(uint64)
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
 	if len(parts) < 3 {
@@ -38,13 +38,11 @@ func Bump(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *temp
 		return
 	}
 	redirect = fmt.Sprintf("/discuss/%s", ue.String())
-	log.Println("back to:", redirect)
 	// check if already bumped
 	key = fmt.Sprintf("topic:%d:bumped", id)
 	voted, rerr := shared.RedisClient.Sismember(key, u_id)
 	if rerr != nil || voted {
 		// already voted
-		log.Println("already voted:" )
 		return
 	}
 	go BumpThread(u_id, id, d_id)
@@ -52,7 +50,7 @@ func Bump(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *temp
 }
 
 func Bury(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
-	log.Println("route: bury topic")
+//	log.Println("route: bury topic")
 	var u_id = sess.Values["id"].(uint64)
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
 	if len(parts) < 3 {
@@ -75,13 +73,11 @@ func Bury(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *temp
 		return
 	}
 	redirect = fmt.Sprintf("/discuss/%s", ue.String())
-	log.Println("back to:", redirect)
 	// check if already buried
 	key = fmt.Sprintf("topic:%d:buried", id)
 	voted, rerr := shared.RedisClient.Sismember(key, u_id)
 	if rerr != nil || voted {
 		// already voted
-		log.Println("already voted:" )
 		return
 	}
 	go BuryThread(u_id, id, d_id)
@@ -118,7 +114,7 @@ func AddTopic(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *
 }
 
 func ViewTopic(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
-	log.Println("route: view topic")
+//	log.Println("route: view topic")
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
 	if len(parts) < 2 {
 		redirect = "/"
