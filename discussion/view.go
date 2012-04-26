@@ -1,11 +1,20 @@
 package discussion
 
 import (
+	"html/template"
 	"net/http"
 
 	"discuss/topic"
 	"discuss/shared"
 )
+
+var addTpls = template.Must(template.ParseFiles(
+		append(shared.Templates, "./templates/discussion/form.tpl")...
+))
+
+var listTpls = template.Must(template.ParseFiles(
+		append(shared.Templates, "./templates/discussion/listing.tpl")...
+))
 
 type List struct {
 	Id		uint64
@@ -21,7 +30,7 @@ type Form struct {
 	Keywords	string
 }
 
-func AddForm(r *http.Request) (body *shared.Body, files []string) {
+func AddForm(r *http.Request) (body *shared.Body, tpl *template.Template) {
 	body = new(shared.Body)
 	if r.Method == "POST" {
 		f := new(Form)
@@ -36,6 +45,6 @@ func AddForm(r *http.Request) (body *shared.Body, files []string) {
 		Labels: []string{"Add Discussion"},
 		Uris: []string{""},
 	}
-	files = append(files, "./templates/discussion/form.tpl")
+	tpl = addTpls
 	return
 }

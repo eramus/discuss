@@ -2,6 +2,7 @@ package user
 
 import (
 	"html"
+	"html/template"
 	"log"
 	"net/http"
 	"strings"
@@ -11,7 +12,7 @@ import (
 	"discuss/shared"
 )
 
-func Register(r *http.Request, sess *sessions.Session) (body *shared.Body, files []string, redirect string) {
+func Register(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
 //	log.Println("route: register")
 	var id uint64
 	if _, ok := sess.Values["id"]; ok {
@@ -19,11 +20,11 @@ func Register(r *http.Request, sess *sessions.Session) (body *shared.Body, files
 	}
 	if id == 0 {
 		if r.Method != "POST" {
-			body, files = RegisterForm(r)
+			body, tpl = RegisterForm(r)
 		} else {
 			id, err := Add(r)
 			if err != nil {
-				body, files = RegisterForm(r)
+				body, tpl = RegisterForm(r)
 			} else {
 				sess.Values["id"] = id
 				redirect = "/"
@@ -35,7 +36,7 @@ func Register(r *http.Request, sess *sessions.Session) (body *shared.Body, files
 	return
 }
 
-func Login(r *http.Request, sess *sessions.Session) (body *shared.Body, files []string, redirect string) {
+func Login(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
 //	log.Println("route: login")
 	var id uint64
 	if _, ok := sess.Values["id"]; ok {
@@ -43,11 +44,11 @@ func Login(r *http.Request, sess *sessions.Session) (body *shared.Body, files []
 	}
 	if id == 0 {
 		if r.Method != "POST" {
-			body, files = LoginForm(r)
+			body, tpl = LoginForm(r)
 		} else {
 			id, err := Authenticate(r)
 			if err != nil {
-				body, files = LoginForm(r)
+				body, tpl = LoginForm(r)
 			} else {
 				sess.Values["id"] = id
 				fs := sess.Flashes("redirect")
@@ -55,10 +56,6 @@ func Login(r *http.Request, sess *sessions.Session) (body *shared.Body, files []
 				if len(fs) > 0 {
 					redirect = fs[0].(string)
 				}
-				// check for remember flag
-/*				if r.FormValue("remember") == "1" {
-					shared.Remember(r, )
-				}*/
 			}
 		}
 	} else {
@@ -67,7 +64,7 @@ func Login(r *http.Request, sess *sessions.Session) (body *shared.Body, files []
 	return
 }
 
-func Logout(r *http.Request, sess *sessions.Session) (body *shared.Body, files []string, redirect string) {
+func Logout(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
 	log.Println("route: logout")
 	sess.Values["id"] = uint64(0)
 	redirect = "/"
@@ -78,7 +75,7 @@ func Logout(r *http.Request, sess *sessions.Session) (body *shared.Body, files [
 	return
 }
 
-func Profile(r *http.Request, sess *sessions.Session) (body *shared.Body, files []string, redirect string) {
+func Profile(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
 	// figure out where we are
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
 	if len(parts) < 2 {
@@ -98,11 +95,11 @@ func Profile(r *http.Request, sess *sessions.Session) (body *shared.Body, files 
 	}
 	if logged_in_id == id {
 		// show own user view
-		body, files = FeedPage()
+		body, tpl = FeedPage()
 		return
 	}
 	// show other user view
-	body, files = ProfilePage()
+	body, tpl = ProfilePage()
 	return
 }
 

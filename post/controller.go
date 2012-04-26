@@ -3,6 +3,7 @@ package post
 import (
 	"fmt"
 	"html"
+	"html/template"
 	"log"
 	"net/http"
 	"strconv"
@@ -13,7 +14,7 @@ import (
 	"discuss/shared"
 )
 
-func Bump(r *http.Request, sess *sessions.Session) (body *shared.Body, files []string, redirect string) {
+func Bump(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
 	log.Println("route: bump post")
 	var u_id = sess.Values["id"].(uint64)
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
@@ -37,7 +38,7 @@ func Bump(r *http.Request, sess *sessions.Session) (body *shared.Body, files []s
 	return
 }
 
-func Bury(r *http.Request, sess *sessions.Session) (body *shared.Body, files []string, redirect string) {
+func Bury(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
 	log.Println("route: bury post")
 	var u_id = sess.Values["id"].(uint64)
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
@@ -61,7 +62,7 @@ func Bury(r *http.Request, sess *sessions.Session) (body *shared.Body, files []s
 	return
 }
 
-func AddPost(r *http.Request, sess *sessions.Session) (body *shared.Body, files []string, redirect string) {
+func AddPost(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
 //	log.Println("route: add post")
 	var u_id = sess.Values["id"].(uint64)
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
@@ -75,11 +76,11 @@ func AddPost(r *http.Request, sess *sessions.Session) (body *shared.Body, files 
 		p_id, _ = strconv.ParseInt(parts[3], 10, 64)
 	}
 	if r.Method != "POST" {
-		body, files = AddForm(r, uint64(t_id), uint64(p_id))
+		body, tpl = AddForm(r, uint64(t_id), uint64(p_id))
 	} else {
 		id, err := Add(r, u_id)
 		if err != nil {
-			body, files = AddForm(r, uint64(t_id), uint64(p_id))
+			body, tpl = AddForm(r, uint64(t_id), uint64(p_id))
 		} else {
 			redirect = fmt.Sprintf("/topic/%d#%d", uint64(t_id), id)
 		}

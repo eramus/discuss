@@ -3,7 +3,6 @@ package shared
 import (
 	"fmt"
 	"log"
-	"html/template"
 	"os"
 	"strings"
 
@@ -19,12 +18,12 @@ var (
 	NoeqClient	*noeq.Client
 	SolrDiscuss	= solr.New("localhost", 8080, "discuss")
 	SolrPosts	= solr.New("localhost", 8080, "posts")
-	Wrapper		= template.Must(template.ParseFiles(
+	Templates	= []string{
 		"./templates/wrapper.tpl",
 		"./templates/header.tpl",
 		"./templates/body.tpl",
 		"./templates/footer.tpl",
-	))
+	}
 )
 
 type Page struct {

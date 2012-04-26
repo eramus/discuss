@@ -3,6 +3,7 @@ package topic
 import (
 	"fmt"
 	"html"
+	"html/template"
 	"log"
 	"net/http"
 	"strconv"
@@ -13,7 +14,7 @@ import (
 	"discuss/shared"
 )
 
-func Bump(r *http.Request, sess *sessions.Session) (body *shared.Body, files []string, redirect string) {
+func Bump(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
 	log.Println("route: bump topic")
 	var u_id = sess.Values["id"].(uint64)
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
@@ -50,7 +51,7 @@ func Bump(r *http.Request, sess *sessions.Session) (body *shared.Body, files []s
 	return
 }
 
-func Bury(r *http.Request, sess *sessions.Session) (body *shared.Body, files []string, redirect string) {
+func Bury(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
 	log.Println("route: bury topic")
 	var u_id = sess.Values["id"].(uint64)
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
@@ -87,7 +88,7 @@ func Bury(r *http.Request, sess *sessions.Session) (body *shared.Body, files []s
 	return
 }
 
-func AddTopic(r *http.Request, sess *sessions.Session) (body *shared.Body, files []string, redirect string) {
+func AddTopic(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
 //	log.Println("route: add topic")
 	var u_id = sess.Values["id"].(uint64)
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
@@ -104,11 +105,11 @@ func AddTopic(r *http.Request, sess *sessions.Session) (body *shared.Body, files
 	}
 	d_id := uint64(res.Int64())
 	if r.Method != "POST" {
-		body, files = AddForm(r, d_id, parts)
+		body, tpl = AddForm(r, d_id, parts)
 	} else {
 		id, err := Add(r, u_id)
 		if err != nil {
-			body, files = AddForm(r, d_id, parts)
+			body, tpl = AddForm(r, d_id, parts)
 		} else {
 			redirect = fmt.Sprintf("/topic/%d/", id)
 		}
@@ -116,7 +117,7 @@ func AddTopic(r *http.Request, sess *sessions.Session) (body *shared.Body, files
 	return
 }
 
-func ViewTopic(r *http.Request, sess *sessions.Session) (body *shared.Body, files []string, redirect string) {
+func ViewTopic(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
 	log.Println("route: view topic")
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
 	if len(parts) < 2 {
@@ -135,6 +136,6 @@ func ViewTopic(r *http.Request, sess *sessions.Session) (body *shared.Body, file
 	body.Breadcrumbs = &shared.Breadcrumbs{labels, uris}
 	body.ContentData = t
 	go AddThreadView(t.DId, t.Id)
-	files = append(files, "./templates/topic/view.tpl", "./templates/topic/posts.tpl")
+	tpl = viewTpls
 	return
 }

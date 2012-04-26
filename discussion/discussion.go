@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/simonz05/godis"
-	"solr"
 			
 	. "discuss/shared"
 	"discuss/topic"
@@ -32,10 +31,10 @@ func GetId(uri string) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	id := e.Int64()
+	id := uint64(e.Int64())
 	if id > 0 {
 		// discussion found
-		return uint64(id), nil
+		return id, nil
 	}
 	return 0, nil
 }
@@ -74,15 +73,14 @@ func Add(r *http.Request, u_id uint64) (uint64, error) {
 		return GetId(uri)
 	}
 	// add to solr
-	var ds []interface{}
-	d := &DiscussionDoc {
+	ds := make([]interface{}, 1)
+	ds[1] = &DiscussionDoc {
 		Id: id,
 		Uri: strings.Split(uri, "/"),
 		Title: title,
 		Description: description,
 		Keywords: keywords,
 	}
-	ds = append(ds, d)
 	_, err = SolrDiscuss.Update(ds)
 	if err != nil {
 		// roll it back
@@ -131,10 +129,10 @@ func Topics(id uint64) ([]topic.Topic, error) {
 		return nil, err
 	}
 	var topics []topic.Topic
+	var keys = make([]string, 6)
 	for _, e := range ts.Elems {
 		t_id := uint64(e.Elem.Int64())
 
-		var keys = make([]string, 6)
 		keys[0] = fmt.Sprintf("topic:%d:title", t_id)
 		keys[1] = fmt.Sprintf("topic:%d:lastpost", t_id)
 		keys[2] = fmt.Sprintf("topic:%d:u_id", t_id)
@@ -156,59 +154,6 @@ func Topics(id uint64) ([]topic.Topic, error) {
 		topics = append(topics, t)
 	}
 	return topics, nil
-}
-
-func ParseDiscussions(sr *solr.SolrResponse) (docs []DiscussionDoc) {
-	if len(sr.Response.Docs) > 0 {
-		for _, i := range sr.Response.Docs {
-			doc := i.(map[string]interface{})
-			id, _ := strconv.ParseInt(doc["id"].(string), 10, 64)
-			d := DiscussionDoc {
-				Id: uint64(id),
-				Title: doc["title"].(string),
-			}
-			for _, u := range doc["uri"].([]interface{}) {
-				d.Uri = append(d.Uri, u.(string))
-			}
-			keys := make([]string, 3)
-			keys[0] = fmt.Sprintf("discussion:%d:description", uint64(id))
-			keys[1] = fmt.Sprintf("discussion:%d:numtopics", uint64(id))
-			keys[2] = fmt.Sprintf("discussion:%d:subscribed", uint64(id))
-			fs, rerr := RedisClient.Mget(keys...)
-			if rerr != nil {
-				return
-			}
-			d.Description = fs.Elems[0].Elem.String()
-			d.Topics = fs.Elems[1].Elem.Int64()
-			d.Subscribed = fs.Elems[2].Elem.Int64()
-			docs = append(docs, d)
-		}
-	}
-	return
-}
-
-func ParsePosts(sr *solr.SolrResponse) (docs []PostDoc) {
-	if len(sr.Response.Docs) > 0 {
-		for _, i := range sr.Response.Docs {
-			doc := i.(map[string]interface{})
-			id, _ := strconv.ParseInt(doc["id"].(string), 10, 64)
-			keys := make([]string, 2)
-			keys[0] = fmt.Sprintf("post:%d:post", uint64(id))
-			keys[1] = fmt.Sprintf("post:%d:t_id", uint64(id))
-			fs, rerr := RedisClient.Mget(keys...)
-			if rerr != nil {
-				return
-			}
-			d := PostDoc {
-				Id: uint64(id),
-				TId: uint64(fs.Elems[1].Elem.Int64()),
-				Title: doc["title"].(string),
-				Post: fs.Elems[0].Elem.String(),
-			}
-			docs = append(docs, d)
-		}
-	}
-	return
 }
 
 func defaultDiscussion(prc *godis.PipeClient, id uint64) error {

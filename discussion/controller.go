@@ -3,6 +3,7 @@ package discussion
 import (
 	"fmt"
 	"html"
+	"html/template"
 	"log"
 	"net/http"
 	"strings"
@@ -12,7 +13,7 @@ import (
 	"discuss/shared"
 )
 
-func Subscribe(r *http.Request, sess *sessions.Session) (body *shared.Body, files []string, redirect string) {
+func Subscribe(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
 //	log.Println("route: subscribe")
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
 	if len(parts) < 2 {
@@ -47,7 +48,7 @@ func Subscribe(r *http.Request, sess *sessions.Session) (body *shared.Body, file
 	return
 }
 
-func Unsubscribe(r *http.Request, sess *sessions.Session) (body *shared.Body, files []string, redirect string) {
+func Unsubscribe(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
 //	log.Println("route: unsubscribe")
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
 	if len(parts) < 2 {
@@ -81,16 +82,16 @@ func Unsubscribe(r *http.Request, sess *sessions.Session) (body *shared.Body, fi
 	return
 }
 
-func AddDiscussion(r *http.Request, sess *sessions.Session) (body *shared.Body, files []string, redirect string) {
+func AddDiscussion(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
 	log.Println("route: add discussion")
 	var u_id = sess.Values["id"].(uint64)
 	if r.Method != "POST" {
-		body, files = AddForm(r)
+		body, tpl = AddForm(r)
 	} else {
 		id, err := Add(r, u_id)
 		if err != nil {
 			log.Println("add err:", err)
-			body, files = AddForm(r)
+			body, tpl = AddForm(r)
 		} else {
 			redirect, _ = GetUri(id)
 			redirect = "/discuss/" + redirect
@@ -99,7 +100,7 @@ func AddDiscussion(r *http.Request, sess *sessions.Session) (body *shared.Body, 
 	return
 }
 
-func ViewDiscussion(r *http.Request, sess *sessions.Session) (body *shared.Body, files []string, redirect string) {
+func ViewDiscussion(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
 	log.Println("route: view discussion")
 	var u_id uint64
 	if _, ok := sess.Values["id"]; ok {
@@ -151,12 +152,12 @@ func ViewDiscussion(r *http.Request, sess *sessions.Session) (body *shared.Body,
 						Topics: ts,
 					},
 				}
-				files = append(files, "./templates/discussion/listing.tpl")
+				tpl = listTpls
 			}
 //		}
 	} else {
 		// want to add?
-		body, files = AddForm(r)
+		body, tpl = AddForm(r)
 		if err != nil {
 			log.Println("no page:", err)
 		}

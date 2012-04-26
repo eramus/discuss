@@ -2,10 +2,15 @@ package post
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
 
 	"discuss/shared"
 )
+
+var addTpls = template.Must(template.ParseFiles(
+		append(shared.Templates, "./templates/post/form.tpl")...
+))
 
 type Post struct {
 	Id uint64
@@ -24,7 +29,7 @@ type Form struct {
 	Post	string
 }
 
-func AddForm(r *http.Request, t_id, p_id uint64) (body *shared.Body, files []string) {
+func AddForm(r *http.Request, t_id, p_id uint64) (body *shared.Body, tpl *template.Template) {
 	t, rerr := shared.RedisClient.Get(fmt.Sprintf("topic:%d:title", t_id))
 	if rerr != nil {
 		return
@@ -49,6 +54,6 @@ func AddForm(r *http.Request, t_id, p_id uint64) (body *shared.Body, files []str
 	body.Breadcrumbs = &shared.Breadcrumbs{labels, uris}
 	body.ContentData = f
 
-	files = append(files, "./templates/post/form.tpl")
+	tpl = addTpls
 	return
 }

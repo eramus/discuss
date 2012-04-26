@@ -1,10 +1,24 @@
 package user
 
 import (
+	"html/template"
 	"net/http"
 	
 	"discuss/shared"
 )
+
+var registerTpls = template.Must(template.ParseFiles(
+		append(shared.Templates, "./templates/user/register.tpl")...
+))
+var loginTpls = template.Must(template.ParseFiles(
+		append(shared.Templates, "./templates/user/login.tpl")...
+))
+var profileTpls = template.Must(template.ParseFiles(
+		append(shared.Templates, "./templates/user/profile.tpl")...
+))
+var feedTpls = template.Must(template.ParseFiles(
+		append(shared.Templates, "./templates/user/feed.tpl")...
+))
 
 type Form  struct {
 	Username	string
@@ -12,7 +26,7 @@ type Form  struct {
 	Remember	string
 }
 
-func RegisterForm(r *http.Request) (body *shared.Body, files []string) {
+func RegisterForm(r *http.Request) (body *shared.Body, tpl *template.Template) {
 	body = new(shared.Body)
 	if r.Method == "POST" {
 		f := new(Form)
@@ -25,11 +39,11 @@ func RegisterForm(r *http.Request) (body *shared.Body, files []string) {
 		Labels: []string{"Register"},
 		Uris: []string{""},
 	}
-	files = append(files, "./templates/user/register.tpl")
+	tpl = registerTpls
 	return
 }
 
-func LoginForm(r *http.Request) (body *shared.Body, files []string) {
+func LoginForm(r *http.Request) (body *shared.Body, tpl *template.Template) {
 	body = new(shared.Body)
 	if r.Method == "POST" {
 		f := new(Form)
@@ -42,19 +56,19 @@ func LoginForm(r *http.Request) (body *shared.Body, files []string) {
 		Labels: []string{"Login"},
 		Uris: []string{""},
 	}
-	files = append(files, "./templates/user/login.tpl")
+	tpl = loginTpls
 	return
 }
 
-func ProfilePage() (body *shared.Body, files []string) {
+func ProfilePage() (body *shared.Body, tpl *template.Template) {
 	body = new(shared.Body)
-	files = append(files, "./templates/user/profile.tpl")
+	tpl = profileTpls
 	return
 }
 
-func FeedPage() (body *shared.Body, files []string) {
+func FeedPage() (body *shared.Body, tpl *template.Template) {
 	body = new(shared.Body)
 	body.NoSidebar = true
-	files = append(files, "./templates/user/feed.tpl")
+	tpl = feedTpls
 	return
 }

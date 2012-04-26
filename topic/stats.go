@@ -83,8 +83,7 @@ func updateViews(done chan bool) {
 				continue
 			}
 			if l < runUpdate {
-				e, rerr := shared.RedisClient.Get(key + ":updated")
-				log.Println("E:", e == nil, "ERR:", rerr)
+				e, _ := shared.RedisClient.Get(key + ":updated")
 				if e != nil && now - e.Int64() < forceUpdate {
 					log.Println("skipping:", key)
 					continue
@@ -117,7 +116,7 @@ func updateViews(done chan bool) {
 				}
 			}
 		}
-		log.Println("viewMap:", viewMap)
+//		log.Println("viewMap:", viewMap)
 		for id, cnt := range viewMap {
 			key = fmt.Sprintf("topic:%d:views", id)
 			shared.RedisClient.Incrby(key, cnt)

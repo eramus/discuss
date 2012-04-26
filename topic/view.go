@@ -1,6 +1,7 @@
 package topic
 
 import (
+	"html/template"
 //	"io"
 //	"log"
 	"net/http"
@@ -9,6 +10,13 @@ import (
 	"discuss/post"
 	"discuss/shared"
 )
+
+var addTpls = template.Must(template.ParseFiles(
+		append(shared.Templates, "./templates/topic/form.tpl")...
+))
+var viewTpls = template.Must(template.ParseFiles(
+		append(shared.Templates, "./templates/topic/view.tpl", "./templates/topic/posts.tpl")...
+))
 
 type Topic struct {
 	Id uint64
@@ -29,7 +37,7 @@ type Form struct {
 	Post	string
 }
 
-func AddForm(r *http.Request, d_id uint64, parts[]string) (body *shared.Body, files []string) {
+func AddForm(r *http.Request, d_id uint64, parts[]string) (body *shared.Body, tpl *template.Template) {
 	body = new(shared.Body)
 	labels, uris := shared.GetDiscussionBreadcrumbs(d_id, false)
 	labels, uris = append(labels, "Add Topic"), append(uris, "")
@@ -45,7 +53,6 @@ func AddForm(r *http.Request, d_id uint64, parts[]string) (body *shared.Body, fi
 
 	}
 	body.ContentData = f
-
-	files = append(files, "./templates/topic/form.tpl")
+	tpl = addTpls
 	return
 }

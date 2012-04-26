@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"html/template"
 	"log"
 	"net/http"
 	"regexp"
@@ -8,7 +9,7 @@ import (
 	"code.google.com/p/gorilla/sessions"
 )
 
-type requestHandler func(*http.Request, *sessions.Session) (*Body, []string, string)
+type requestHandler func(*http.Request, *sessions.Session) (*Body, *template.Template, string)
 type responseHandler func(http.ResponseWriter, *http.Request, *sessions.Session) error
 
 type route struct {
@@ -74,7 +75,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(404)
 		reqhandler = r.notFound
 	}
-	body, files, redirect := reqhandler(req, sess)
+	body, tpl, redirect := reqhandler(req, sess)
 	visited(sess)
 //	sess.AddFlash(req.URL.Path, "last")
 	if respHandler != nil {
@@ -96,19 +97,11 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	page := new(Page)
 	page.Body = body
-	wrapper, err := Wrapper.Clone()
-	if err != nil {
-		log.Println("template err:", err)
-		return
-	}
-	_, err = wrapper.ParseFiles(files...)
-	if err != nil {
-		log.Println("template err:", err)
-		return
-	}
 	sess.Save(req, w)
-	err = wrapper.Execute(w, page)
-	if err != nil {
-		log.Println("output err:", err)
+	if tpl != nil {
+		err = tpl.Execute(w, page)
+		if err != nil {
+			log.Println("output err:", err)
+		}
 	}
 }
