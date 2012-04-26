@@ -9,20 +9,24 @@ lots of work to do. this was mostly just an playground for solr and redis. a dis
 
 # features
 can do what a basic forum should do:
-	- allow users to login, logout and register + a remember me option
-	- view and create topics
-	- view and create posts
-	- search for things
+
+	allow users to login, logout and register + a remember me option
+	view and create topics
+	view and create posts
+	search for things
 
 extra features:
-	- some basic +/- voting options for topics and posts
-	- users can create discsussions and sub discussions (ie /discuss/cars & /discuss/cars/honda)
-	- anon-esque posting
-	- threaded discussions
-	- its quick (for me atleast)
+
+	some basic +/- voting options for topics and posts
+	users can create discsussions and sub discussions (ie /discuss/cars & /discuss/cars/honda)
+	anon-esque posting
+	threaded discussions
+	its quick (for me atleast)
 
 # prereq
 redis -- http://redis.io
+
 noeqd -- https://github.com/bmizerany/noeqd
+
 solr -- http://lucene.apache.org/solr/ (hmm need my config too.. maybe later -- or look at the source and you can figure it out)
 
