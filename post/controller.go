@@ -22,8 +22,7 @@ func Bump(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *temp
 		redirect = "/"
 		return
 	}
-	p_id, _ := strconv.ParseInt(parts[2], 10, 64)
-	id := uint64(p_id)
+	id, _ := strconv.ParseUint(parts[2], 10, 64)
 	e, _ := shared.RedisClient.Get(fmt.Sprintf("post:%d:t_id", id))
 	redirect = fmt.Sprintf("/topic/%d", uint64(e.Int64()))
 	// check if already bumped
@@ -45,8 +44,7 @@ func Bury(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *temp
 		redirect = "/"
 		return
 	}
-	p_id, _ := strconv.ParseInt(parts[2], 10, 64)
-	id := uint64(p_id)
+	id, _ := strconv.ParseUint(parts[2], 10, 64)
 	e, _ := shared.RedisClient.Get(fmt.Sprintf("post:%d:t_id", id))
 	redirect = fmt.Sprintf("/topic/%d", uint64(e.Int64()))
 	// check if already buried
@@ -68,19 +66,19 @@ func AddPost(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *t
 		redirect = "/"
 		return
 	}
-	t_id, _ := strconv.ParseInt(parts[2], 10, 64)
-	var p_id int64
+	t_id, _ := strconv.ParseUint(parts[2], 10, 64)
+	var p_id uint64
 	if len(parts) > 3 {
-		p_id, _ = strconv.ParseInt(parts[3], 10, 64)
+		p_id, _ = strconv.ParseUint(parts[3], 10, 64)
 	}
 	if r.Method != "POST" {
-		body, tpl = AddForm(r, uint64(t_id), uint64(p_id))
+		body, tpl = AddForm(r, t_id, p_id)
 	} else {
 		id, err := Add(r, u_id)
 		if err != nil {
-			body, tpl = AddForm(r, uint64(t_id), uint64(p_id))
+			body, tpl = AddForm(r, t_id, p_id)
 		} else {
-			redirect = fmt.Sprintf("/topic/%d#%d", uint64(t_id), id)
+			redirect = fmt.Sprintf("/topic/%d#%d", t_id, id)
 		}
 	}
 	return

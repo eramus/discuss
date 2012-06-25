@@ -62,7 +62,7 @@ func Add(r *http.Request) (uint64, error) {
 	}
 
 	// try to set it
-	res, rerr := RedisClient.Setnx("user:" + username, id)
+	res, rerr := RedisClient.Setnx("users:" + username, id)
 	if rerr != nil {
 		return 0, rerr
 	} else if !res {
@@ -96,7 +96,7 @@ func Authenticate(r *http.Request) (uint64, error) {
 		return 0, fmt.Errorf("bad login")
 	}
 	// get the u_id
-	ue, rerr := RedisClient.Get("user:" + username)
+	ue, rerr := RedisClient.Get("users:" + username)
 	id := uint64(ue.Int64())
 	if rerr != nil {
 		return 0, rerr

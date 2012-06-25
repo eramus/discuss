@@ -1,24 +1,71 @@
-<div id="user_data" style="float:right">
-{{if .UserData.Id}}hi {{.UserData.Username}}&nbsp;<a href="/logout">Logout</a>{{else}}<a href="/register">Register</a>&nbsp;<a href="/login">Login</a>{{end}}
-</div>
-<div id="breadcrumbs" style="float:left">
-{{if .Breadcrumbs}}
-<a href="/">Home</a>
-{{$labels := .Breadcrumbs.Labels}}
-{{range $index, $uri := .Breadcrumbs.Uris}} &raquo; {{if $uri}}<a href="{{$uri}}">{{index $labels $index}}</a>{{else}}{{index $labels $index}}{{end}}{{end}}
+<div class="navbar navbar-fixed-top">
+<div class="navbar-inner">
+<div class="container-fluid">
+	<a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+		<span class="icon-bar"></span>
+		<span class="icon-bar"></span>
+		<span class="icon-bar"></span>
+	</a>
+	<div class="nav-collapse collapse">
+		<ul class="nav">
+		{{if .Breadcrumbs}}
+			<li><a href="/">Home</a></li>
+			{{$labels := .Breadcrumbs.Labels}}
+			{{range $index, $uri := .Breadcrumbs.Uris}}<li{{if $uri}}{{else}} class="active"{{end}}><a{{if $uri}} href="{{$uri}}"{{else}}{{end}}>{{index $labels $index}}</a></li>
+			{{end}}
+			<li class="divider-vertical"></li>
+			<li>
+				<form method="post" action="/search/" class="navbar-search pull-left">
+					<input name="search" type="text" class="search-query" placeholder="Search" {{if .Search}} value="{{.Search}}"{{end}}>
+				</form>
+			</li>
+		{{else}}
+ 			<li class="active"><a>Home</a></li>
+		{{end}}
+		</ul>
+		
+		
+<ul class="nav pull-right">
+{{if .UserData.Id}}
+<li class="dropdown">
+<a href="#" class="dropdown-toggle" data-toggle="dropdown">hi {{.UserData.Username}}<b class="caret"></b></a>
+<ul class="dropdown-menu">
+<li><a href="/logout">Logout</a></li>
+</ul>
+</li>
 {{else}}
-Home
+<li><a href="/register">Register</a></li>
+<li><a href="/login">Login</a></li>
 {{end}}
+</ul>		
+		
+		
+		
+		
+		
+	</div>
 </div>
-<div style="clear: both"></div>
-{{if .Subscribed}}
-<div style="float:left; width: 10%; margin-top: 20px">
-<span><b>Subscribed</b></span>
-<div style="clear: both"></div>
-{{$labels := .Subscribed.Labels}}
-{{range $index, $uri := .Subscribed.Uris}} &raquo; <a href="{{$uri}}">{{index $labels $index}}</a><br />{{end}}
 </div>
+</div>
+
+<div class="container-fluid">
+<div class="row-fluid">
+
+{{if .Subscribed.Labels}}
+<div class="span2">
+	<ul class="nav nav-list">
+		<li class="nav-header">Subscribed</li>
+		{{$labels := .Subscribed.Labels}}
+		{{range $index, $uri := .Subscribed.Uris}}<li><a href="{{$uri}}">{{index $labels $index}}</a></li>
+		{{end}}
+	</ul>
+</div>
+<div class="span10">
+{{else}}
+<div class="span12">
 {{end}}
-<div id="content" style="float:left; width: 88%; margin-top: 20px">
 {{template "content" .ContentData}}
+</div>
+
+</div>
 </div>

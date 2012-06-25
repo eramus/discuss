@@ -39,7 +39,9 @@ func RegisterForm(r *http.Request) (body *shared.Body, tpl *template.Template) {
 		Labels: []string{"Register"},
 		Uris: []string{""},
 	}
-	tpl = registerTpls
+	body.Title = "Register"
+	tpl, _ = registerTpls.Clone()
+	tpl.Parse(shared.GetPageTitle("Register"))
 	return
 }
 
@@ -56,19 +58,25 @@ func LoginForm(r *http.Request) (body *shared.Body, tpl *template.Template) {
 		Labels: []string{"Login"},
 		Uris: []string{""},
 	}
-	tpl = loginTpls
+	body.Title = "Login"
+	tpl, _ = loginTpls.Clone()
+	tpl.Parse(shared.GetPageTitle("Login"))
 	return
 }
 
 func ProfilePage() (body *shared.Body, tpl *template.Template) {
 	body = new(shared.Body)
-	tpl = profileTpls
+	body.Title = "Profile"
+	tpl, _ = profileTpls.Clone()
+	tpl.Parse(shared.GetPageTitle("Profile"))
 	return
 }
 
 func FeedPage() (body *shared.Body, tpl *template.Template) {
 	body = new(shared.Body)
 	body.NoSidebar = true
-	tpl = feedTpls
+	body.Title = "Feed"
+	tpl, _ = feedTpls.Clone()
+	tpl.Parse(shared.GetPageTitle("Feed"))
 	return
 }

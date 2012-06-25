@@ -14,8 +14,10 @@ import (
 	"solr"
 )
 
+const pageTitle = `{{define "pagetitle"}}%s{{end}}`
+
 var (
-	RedisClient	= godis.New("", 0, "")
+	RedisClient	*godis.Client
 	NoeqClient	*noeq.Client
 	SolrDiscuss	= solr.New("localhost", 8080, "discuss")
 	SolrPosts	= solr.New("localhost", 8080, "posts")
@@ -38,6 +40,8 @@ type Body struct {
 	UserData *UserData
 	Subscribed *Subscribed
 	ContentData interface{}
+	Title string
+	Search string
 	NoSidebar bool
 }
 
@@ -78,6 +82,8 @@ type PostDoc struct {
 func init() {
 	runtime.GOMAXPROCS(2)
 	var err error
+	godis.MaxClientConn = 10
+	RedisClient = godis.New("", 0, "")
 	NoeqClient, err = noeq.New("", ":4444")
 	if err != nil {
 		log.Println ("failed to create noeq client", err)
@@ -88,6 +94,26 @@ func init() {
 		log.Println ("failed to create noeq client", err)
 		os.Exit(1)
 	}
+	requests = make(chan bool)
+	go countRequests()
+}
+
+var requestCount int
+var requests chan bool
+
+func countRequests() {
+	for {
+		<-requests
+		requestCount++
+	}
+}
+
+func countRequest() {
+	requests <- true
+}
+
+func GetRequestCount() int {
+	return requestCount
 }
 
 func getSubscribed(sess *sessions.Session) *Subscribed {
@@ -99,7 +125,7 @@ func getSubscribed(sess *sessions.Session) *Subscribed {
 	if id == 0 {
 		return sub
 	}
-	key := fmt.Sprintf("user:%d:subscribed", id)
+	key := fmt.Sprintf("user:%d:joined", id)
 	se, rerr := RedisClient.Smembers(key)
 	if rerr != nil {
 		return sub
@@ -131,6 +157,10 @@ func getUserData(sess *sessions.Session) *UserData {
 	data.Id = id
 	data.Username = ue.String()
 	return data
+}
+
+func GetPageTitle(t string) string {
+	return fmt.Sprintf(pageTitle, t)
 }
 
 func GetTopicBreadcrumbs(id uint64) ([]string, []string) {

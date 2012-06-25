@@ -45,6 +45,8 @@ func AddForm(r *http.Request) (body *shared.Body, tpl *template.Template) {
 		Labels: []string{"Add Discussion"},
 		Uris: []string{""},
 	}
-	tpl = addTpls
+	body.Title = "Add Discussion"
+	tpl, _ = addTpls.Clone()
+	tpl.Parse(shared.GetPageTitle("Add Discussion"))
 	return
 }

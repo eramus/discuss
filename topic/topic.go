@@ -19,10 +19,15 @@ func Get(uri string) (uint64, error) {
 }
 
 func GetById(id uint64) (*Topic, error) {
-	keys := make([]string, 2)
+	keys := make([]string, 3)
 	keys[0] = fmt.Sprintf("topic:%d:d_id", uint64(id))
 	keys[1] = fmt.Sprintf("topic:%d:title", uint64(id))
+	keys[2] = fmt.Sprintf("topic:%d:score", uint64(id))
 	fs, rerr := shared.RedisClient.Mget(keys...)
+	if rerr != nil {
+		return nil, rerr
+	}
+	uc, rerr := shared.RedisClient.Scard(fmt.Sprintf("topic:%d:users", id))
 	if rerr != nil {
 		return nil, rerr
 	}
@@ -49,8 +54,18 @@ func GetById(id uint64) (*Topic, error) {
 		Id: id,
 		DId: uint64(fs.Elems[0].Elem.Int64()),
 		Title: fs.Elems[1].Elem.String(),
+		Score: fs.Elems[2].Elem.Int64(),
 		Posts: posts,
+		Users: uc,
 	}, nil
+}
+
+func Exists(id uint64) bool {
+	val, err := shared.RedisClient.Get(fmt.Sprintf("topic:%d:title", id))
+	if err != nil || val.String() == "" {
+		return false
+	}
+	return true
 }
 
 func Add(r *http.Request, u_id uint64) (uint64, error) {

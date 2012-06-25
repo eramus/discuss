@@ -23,11 +23,13 @@ type Topic struct {
 	DId uint64
 	Uri string
 	Title string
+	Score int64
 	Posts []*post.Post
 	Comments int
 	LastPost string
 	LastPostId uint64
 	NumPosts int64
+	Users int64
 }
 
 type Form struct {
@@ -53,6 +55,8 @@ func AddForm(r *http.Request, d_id uint64, parts[]string) (body *shared.Body, tp
 
 	}
 	body.ContentData = f
-	tpl = addTpls
+	body.Title = "Add Topic"
+	tpl, _ = addTpls.Clone()
+	tpl.Parse(shared.GetPageTitle("Add Topic"))
 	return
 }

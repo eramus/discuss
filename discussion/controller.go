@@ -13,8 +13,8 @@ import (
 	"discuss/shared"
 )
 
-func Subscribe(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
-//	log.Println("route: subscribe")
+func Join(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
+//	log.Println("route: join")
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
 	if len(parts) < 2 {
 		redirect = "/"
@@ -25,20 +25,26 @@ func Subscribe(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl 
 	id, rerr := GetId(uri)
 	if rerr != nil {
 		log.Println("redis err:", rerr)
+		redirect = "/"
+		return
+	} else if id == 0 {
+		redirect = "/"
 		return
 	}
 	var u_id = sess.Values["id"].(uint64)
-	key := fmt.Sprintf("user:%d:subscribed", u_id)
+	key := fmt.Sprintf("user:%d:joined", u_id)
 	added, rerr := shared.RedisClient.Sadd(key, id)
 	if rerr != nil {
 		log.Println("redis err:", rerr)
+		redirect = "/"
 		return
 	}
 	if added {
-		key = fmt.Sprintf("discussion:%d:subscribed", id)
+		key = fmt.Sprintf("discussion:%d:joined", id)
 		_, rerr := shared.RedisClient.Incr(key)
 		if rerr != nil {
 			log.Println("redis err:", rerr)
+			redirect = "/"
 			return
 		}
 	}
@@ -46,8 +52,8 @@ func Subscribe(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl 
 	return
 }
 
-func Unsubscribe(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
-//	log.Println("route: unsubscribe")
+func Leave(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
+//	log.Println("route: leave")
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
 	if len(parts) < 2 {
 		redirect = "/"
@@ -58,20 +64,26 @@ func Unsubscribe(r *http.Request, sess *sessions.Session) (body *shared.Body, tp
 	id, rerr := GetId(uri)
 	if rerr != nil {
 		log.Println("redis err:", rerr)
+		redirect = "/"
+		return
+	} else if id == 0 {
+		redirect = "/"
 		return
 	}
 	var u_id = sess.Values["id"].(uint64)
-	key := fmt.Sprintf("user:%d:subscribed", u_id)
+	key := fmt.Sprintf("user:%d:joined", u_id)
 	removed, rerr := shared.RedisClient.Srem(key, id)
 	if rerr != nil {
 		log.Println("redis err:", rerr)
+		redirect = "/"
 		return
 	}
 	if removed {
-		key = fmt.Sprintf("discussion:%d:subscribed", id)
+		key = fmt.Sprintf("discussion:%d:joined", id)
 		_, rerr := shared.RedisClient.Decr(key)
 		if rerr != nil {
 			log.Println("redis err:", rerr)
+			redirect = "/"
 			return
 		}
 	}
@@ -129,27 +141,28 @@ func ViewDiscussion(r *http.Request, sess *sessions.Session) (body *shared.Body,
 				redirect = "/"
 			} else {
 				labels, uris := shared.GetDiscussionBreadcrumbs(id, true)
-				key := fmt.Sprintf("user:%d:subscribed", u_id)
+				key := fmt.Sprintf("user:%d:joined", u_id)
 				im, rerr := shared.RedisClient.Sismember(key, id)
 				if rerr != nil {
 					log.Println("redis err:", rerr)
 					redirect = "/"
 				}
 				if im {
-					labels, uris = append(labels, "Unsubscribe"), append(uris, "/unsubscribe/" + uri)
+					labels, uris = append(labels, "Unsubscribe"), append(uris, "/leave/" + uri)
 				} else {
-					labels, uris = append(labels, "Subscribe"), append(uris, "/subscribe/" + uri)
+					labels, uris = append(labels, "Subscribe"), append(uris, "/join/" + uri)
 				}
 				body = &shared.Body{
 					Breadcrumbs: &shared.Breadcrumbs{labels, uris},
 					ContentData: &List{
 						Id: id,
 						Uri: uri,
-						Title: te.String(),
 						Topics: ts,
 					},
+					Title: te.String(),
 				}
-				tpl = listTpls
+				tpl, _ = listTpls.Clone()
+				tpl.Parse(shared.GetPageTitle(te.String()))
 			}
 //		}
 	} else {

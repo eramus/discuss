@@ -21,6 +21,8 @@ type Post struct {
 	Posts []*Post
 	Timestamp uint64
 	FTimestamp	string
+	RTimestamp	string
+	Score int64
 }
 
 type Form struct {
@@ -53,7 +55,8 @@ func AddForm(r *http.Request, t_id, p_id uint64) (body *shared.Body, tpl *templa
 	}
 	body.Breadcrumbs = &shared.Breadcrumbs{labels, uris}
 	body.ContentData = f
-
-	tpl = addTpls
+	body.Title = "Add Post"
+	tpl, _ = addTpls.Clone()
+	tpl.Parse(shared.GetPageTitle("Add Post"))
 	return
 }

@@ -13,10 +13,11 @@ import (
 )
 
 func GetById(id, t_id uint64, lvl int) (*Post, error) {
-	keys := make([]string, 3)
+	keys := make([]string, 4)
 	keys[0] = fmt.Sprintf("post:%d:post", uint64(id))
 	keys[1] = fmt.Sprintf("post:%d:u_id", uint64(id))
 	keys[2] = fmt.Sprintf("post:%d:ts", uint64(id))
+	keys[3] = fmt.Sprintf("post:%d:score", uint64(id))
 	fs, rerr := RedisClient.Mget(keys...)
 	if rerr != nil {
 		return nil, rerr
@@ -53,7 +54,9 @@ func GetById(id, t_id uint64, lvl int) (*Post, error) {
 		Post: fs.Elems[0].Elem.String(),
 		Posts: posts,
 		Timestamp: uint64(fs.Elems[2].Elem.Int64()),
-		FTimestamp: FormatTime(fs.Elems[2].Elem.Int64()),
+		FTimestamp: time.Unix(fs.Elems[2].Elem.Int64(), 0).Format("January 01, 2006 @ 15:04"),
+		RTimestamp: FormatTime(fs.Elems[2].Elem.Int64()),
+		Score: fs.Elems[3].Elem.Int64(),
 	}, nil
 }
 

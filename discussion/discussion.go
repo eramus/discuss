@@ -112,7 +112,7 @@ func Add(r *http.Request, u_id uint64) (uint64, error) {
 		// roll back solr too
 		return 0, rerr
 	}
-	err = defaultCreator(prc, id, u_id)
+	err = defaultCreator(prc, u_id, id)
 	if err != nil {
 		prc.Discard()
 		RedisClient.Del("discussions:" + uri)
@@ -129,7 +129,7 @@ func Topics(id uint64) ([]*topic.Topic, error) {
 		return nil, err
 	}
 	var topics = make([]*topic.Topic, len(ts.Elems))
-	var keys = make([]string, 6)
+	var keys = make([]string, 7)
 	for i, e := range ts.Elems {
 		t_id := uint64(e.Elem.Int64())
 
@@ -139,7 +139,12 @@ func Topics(id uint64) ([]*topic.Topic, error) {
 		keys[3] = fmt.Sprintf("topic:%d:last_p_id", t_id)
 		keys[4] = fmt.Sprintf("topic:%d:last_u_id", t_id)
 		keys[5] = fmt.Sprintf("topic:%d:numposts", t_id)
+		keys[6] = fmt.Sprintf("topic:%d:score", t_id)
 		fs, rerr := RedisClient.Mget(keys...)
+		if rerr != nil {
+			return nil, rerr
+		}
+		uc, rerr := RedisClient.Scard(fmt.Sprintf("topic:%d:users", t_id))
 		if rerr != nil {
 			return nil, rerr
 		}
@@ -150,6 +155,8 @@ func Topics(id uint64) ([]*topic.Topic, error) {
 			LastPost: FormatTime(fs.Elems[1].Elem.Int64()),
 			LastPostId: uint64(fs.Elems[2].Elem.Int64()),
 			NumPosts: fs.Elems[5].Elem.Int64(),
+			Score: fs.Elems[6].Elem.Int64(),
+			Users: uc,
 		}
 		topics[i] = t
 	}
@@ -189,7 +196,7 @@ func defaultDiscussion(prc *godis.PipeClient, id uint64) error {
 	return nil
 }
 
-func defaultCreator(prc *godis.PipeClient, id, u_id uint64) error {
+func defaultCreator(prc *godis.PipeClient, u_id, id uint64) error {
 	key := fmt.Sprintf("user:%d:permission:%d", u_id, id)
 	_, rerr := prc.Setbit(key, VIEW, 1)
 	if rerr != nil {

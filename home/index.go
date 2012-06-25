@@ -30,7 +30,10 @@ type Results struct {
 
 func Index(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
 //	log.Println("route: index")
-	tpl = indexTpls
+	body = new(shared.Body)
+	body.Title = "Discuss"
+	tpl, _ = indexTpls.Clone()
+	tpl.Parse(shared.GetPageTitle("Discuss"))
 	return
 }
 
@@ -69,7 +72,10 @@ func Search(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *te
 			Uris: []string{""},
 		}
 		body.ContentData = res
-		tpl = searchTpls
+		body.Title = "Search Results"
+		body.Search = query
+		tpl, _ = searchTpls.Clone()
+		tpl.Parse(shared.GetPageTitle("Search Results"))
 	} else {
 		redirect = "/"
 	}
@@ -81,17 +87,17 @@ func parseDiscussions(sr *solr.SolrResponse) (docs []shared.DiscussionDoc) {
 		keys := make([]string, 3)
 		for _, i := range sr.Response.Docs {
 			doc := i.(map[string]interface{})
-			id, _ := strconv.ParseInt(doc["id"].(string), 10, 64)
+			id, _ := strconv.ParseUint(doc["id"].(string), 10, 64)
 			d := shared.DiscussionDoc {
-				Id: uint64(id),
+				Id: id,
 				Title: doc["title"].(string),
 			}
 			for _, u := range doc["uri"].([]interface{}) {
 				d.Uri = append(d.Uri, u.(string))
 			}
-			keys[0] = fmt.Sprintf("discussion:%d:description", uint64(id))
-			keys[1] = fmt.Sprintf("discussion:%d:numtopics", uint64(id))
-			keys[2] = fmt.Sprintf("discussion:%d:subscribed", uint64(id))
+			keys[0] = fmt.Sprintf("discussion:%d:description", id)
+			keys[1] = fmt.Sprintf("discussion:%d:numtopics", id)
+			keys[2] = fmt.Sprintf("discussion:%d:subscribed", id)
 			fs, rerr := shared.RedisClient.Mget(keys...)
 			if rerr != nil {
 				return
@@ -110,15 +116,15 @@ func parsePosts(sr *solr.SolrResponse) (docs []shared.PostDoc) {
 		keys := make([]string, 2)
 		for _, i := range sr.Response.Docs {
 			doc := i.(map[string]interface{})
-			id, _ := strconv.ParseInt(doc["id"].(string), 10, 64)
-			keys[0] = fmt.Sprintf("post:%d:post", uint64(id))
-			keys[1] = fmt.Sprintf("post:%d:t_id", uint64(id))
+			id, _ := strconv.ParseUint(doc["id"].(string), 10, 64)
+			keys[0] = fmt.Sprintf("post:%d:post", id)
+			keys[1] = fmt.Sprintf("post:%d:t_id", id)
 			fs, rerr := shared.RedisClient.Mget(keys...)
 			if rerr != nil {
 				return
 			}
 			d := shared.PostDoc {
-				Id: uint64(id),
+				Id: id,
 				TId: uint64(fs.Elems[1].Elem.Int64()),
 				Title: doc["title"].(string),
 				Post: fs.Elems[0].Elem.String(),
