@@ -2,9 +2,8 @@ package shared
 
 import (
 	"fmt"
-//	"log"
+	//	"log"
 	"net/http"
-	"sync"
 	"strconv"
 
 	"code.google.com/p/gorilla/context"
@@ -12,6 +11,51 @@ import (
 	"code.google.com/p/gorilla/sessions"
 	"github.com/dchest/passwordhash"
 )
+
+type sessionAction struct {
+	key    string
+	expire int64
+	data   interface{}
+	done   chan bool
+}
+
+var (
+	visits chan *sessionAction
+	kills  chan *sessionAction
+	saves  chan *sessionAction
+
+	noVisit  = fmt.Errorf("no visit")
+	cantKill = fmt.Errorf("cant kill")
+	cantSave = fmt.Errorf("cant save")
+)
+
+func startSessions() {
+	visits = make(chan *sessionAction)
+	kills = make(chan *sessionAction)
+	saves = make(chan *sessionAction)
+	for {
+		select {
+		case sa := <-visits:
+			_, err := RedisClient.Expire(sa.key, sa.expire)
+			if err != nil {
+				sa.done <- false
+			}
+			sa.done <- true
+		case sa := <-kills:
+			_, err := RedisClient.Del(sa.key)
+			if err != nil {
+				sa.done <- false
+			}
+			sa.done <- true
+		case sa := <-saves:
+			err := RedisClient.Setex(sa.key, sa.expire, sa.data)
+			if err != nil {
+				sa.done <- false
+			}
+			sa.done <- true
+		}
+	}
+}
 
 func GetSession(r *http.Request, key string) (*sessions.Session, error) {
 	return getSession(r, key)
@@ -25,26 +69,29 @@ func getSession(r *http.Request, key string) (*sessions.Session, error) {
 	return s, nil
 }
 
-func visited(s *sessions.Session) {
-	sessionMutex.Lock()
-	defer sessionMutex.Unlock()
-	RedisClient.Expire("session:" + s.ID, int64(sessionExpire))
+func visited(s *sessions.Session) error {
+	d := make(chan bool)
+	visits <- &sessionAction{"session:" + s.ID, int64(sessionExpire), nil, d}
+	f := <-d
+	if !f {
+		return noVisit
+	}
+	return nil
 }
 
 func killSession(r *http.Request, w http.ResponseWriter, s *sessions.Session) error {
+	d := make(chan bool)
+	kills <- &sessionAction{"session:" + s.ID, 0, nil, d}
+	f := <-d
+	if !f {
+		return cantKill
+	}
 	var opts = *sessionStore.Options
 	opts.MaxAge = -1
 	s.Options = &opts
 	// values
 	for k, _ := range s.Values {
 		delete(s.Values, k)
-	}
-	key := "session:" + s.ID
-	sessionMutex.Lock()
-	defer sessionMutex.Unlock()
-	_, rerr := RedisClient.Del(key)
-	if rerr != nil {
-		return rerr
 	}
 	s.Save(r, w)
 	return nil
@@ -113,19 +160,18 @@ func Regen(r *http.Request) (uint64, error) {
 
 // redisStore ------------------------------------------------------------
 
-var sessionMutex sync.RWMutex
 var sessionExpire = 300
 var rememberExpire = 31536000
 var rememberOpts = &sessions.Options{
-	Path:   "/",
-	MaxAge: rememberExpire,
+	Path:     "/",
+	MaxAge:   rememberExpire,
 	HttpOnly: true,
 }
 
 var storeKey = []byte("")
 var rememberKey = []byte("")
 
-var sessionStore	= newRedisStore(storeKey)
+var sessionStore = newRedisStore(storeKey)
 
 func newRedisStore(keyPairs ...[]byte) *redisStore {
 	return &redisStore{
@@ -162,7 +208,7 @@ func (s *redisStore) New(r *http.Request, name string) (*sessions.Session, error
 	var session *sessions.Session
 	session = sessions.NewSession(s, name)
 	session.IsNew = true
-	
+
 	if c != nil {
 		securecookie.DecodeMulti(name, c.Value, &session.ID, s.Codecs...)
 		s.load(session)
@@ -223,12 +269,11 @@ func (s *redisStore) save(session *sessions.Session) error {
 	if err != nil {
 		return err
 	}
-	key := "session:" + session.ID
-	sessionMutex.Lock()
-	defer sessionMutex.Unlock()
-	rerr := RedisClient.Setex(key, int64(sessionExpire), encoded)
-	if rerr != nil {
-		return rerr
+	d := make(chan bool)
+	saves <- &sessionAction{"session:" + session.ID, int64(sessionExpire), encoded, d}
+	f := <-d
+	if !f {
+		return cantSave
 	}
 	return nil
 }

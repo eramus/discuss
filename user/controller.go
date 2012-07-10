@@ -3,7 +3,7 @@ package user
 import (
 	"html"
 	"html/template"
-//	"log"
+	//	"log"
 	"net/http"
 	"strings"
 
@@ -13,18 +13,18 @@ import (
 )
 
 func Register(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
-//	log.Println("route: register")
+	//	log.Println("route: register")
 	var id uint64
 	if _, ok := sess.Values["id"]; ok {
 		id = sess.Values["id"].(uint64)
 	}
 	if id == 0 {
 		if r.Method != "POST" {
-			body, tpl = RegisterForm(r)
+			body, tpl = registerForm(r)
 		} else {
-			id, err := Add(r)
+			id, err := add(r)
 			if err != nil {
-				body, tpl = RegisterForm(r)
+				body, tpl = registerForm(r)
 			} else {
 				sess.Values["id"] = id
 				redirect = "/"
@@ -37,18 +37,18 @@ func Register(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *
 }
 
 func Login(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
-//	log.Println("route: login")
+	//	log.Println("route: login")
 	var id uint64
 	if _, ok := sess.Values["id"]; ok {
 		id = sess.Values["id"].(uint64)
 	}
 	if id == 0 {
 		if r.Method != "POST" {
-			body, tpl = LoginForm(r)
+			body, tpl = loginForm(r)
 		} else {
-			id, err := Authenticate(r)
+			id, err := authenticate(r)
 			if err != nil {
-				body, tpl = LoginForm(r)
+				body, tpl = loginForm(r)
 			} else {
 				sess.Values["id"] = id
 				fs := sess.Flashes("redirect")
@@ -65,7 +65,7 @@ func Login(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *tem
 }
 
 func Logout(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
-//	log.Println("route: logout")
+	//	log.Println("route: logout")
 	sess.Values["id"] = uint64(0)
 	redirect = "/"
 	fs := sess.Flashes("last")
@@ -95,33 +95,10 @@ func Profile(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *t
 	}
 	if logged_in_id == id {
 		// show own user view
-		body, tpl = FeedPage()
+		body, tpl = feedPage()
 		return
 	}
 	// show other user view
-	body, tpl = ProfilePage()
+	body, tpl = profilePage()
 	return
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

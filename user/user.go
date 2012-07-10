@@ -5,10 +5,10 @@ import (
 	_ "log"
 	"net/http"
 	"time"
-	
+
 	_ "github.com/bmizerany/noeq.go"
 	"github.com/dchest/passwordhash"
-	
+
 	. "discuss/shared"
 )
 
@@ -47,7 +47,7 @@ etc
 
 */
 
-func Add(r *http.Request) (uint64, error) {
+func add(r *http.Request) (uint64, error) {
 	// get an id
 	id, err := NoeqClient.GenOne()
 	if err != nil {
@@ -62,7 +62,7 @@ func Add(r *http.Request) (uint64, error) {
 	}
 
 	// try to set it
-	res, rerr := RedisClient.Setnx("users:" + username, id)
+	res, rerr := RedisClient.Setnx("users:"+username, id)
 	if rerr != nil {
 		return 0, rerr
 	} else if !res {
@@ -85,11 +85,11 @@ func Add(r *http.Request) (uint64, error) {
 	return id, nil
 }
 
-func CheckRemember(r *http.Request) (uint64, error) {
+func checkRemember(r *http.Request) (uint64, error) {
 	return 0, nil
 }
 
-func Authenticate(r *http.Request) (uint64, error) {
+func authenticate(r *http.Request) (uint64, error) {
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 	if username == "" || password == "" {
@@ -131,10 +131,10 @@ func Authenticate(r *http.Request) (uint64, error) {
 	return id, nil
 }
 
-func Get(parts []string) string {
+func get(parts []string) string {
 	return fmt.Sprintf("DO A USER LOOKUP: %q\n", parts)
 }
 
-func GetById(id uint64) string {
+func getById(id uint64) string {
 	return fmt.Sprintf("DO A USER ID LOOKUP: %q\n", id)
 }

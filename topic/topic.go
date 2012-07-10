@@ -6,19 +6,19 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-	
+
 	"github.com/simonz05/godis"
 
 	"discuss/post"
 	"discuss/shared"
 )
 
-func Get(uri string) (uint64, error) {
+func get(uri string) (uint64, error) {
 	fmt.Printf("DO A TOPIC PERMALINK LOOK: %q\n", uri)
 	return 0, nil
 }
 
-func GetById(id uint64) (*Topic, error) {
+func getById(id uint64) (*Topic, error) {
 	keys := make([]string, 3)
 	keys[0] = fmt.Sprintf("topic:%d:d_id", uint64(id))
 	keys[1] = fmt.Sprintf("topic:%d:title", uint64(id))
@@ -51,8 +51,8 @@ func GetById(id uint64) (*Topic, error) {
 		}
 	}
 	return &Topic{
-		Id: id,
-		DId: uint64(fs.Elems[0].Elem.Int64()),
+		Id:    id,
+		DId:   uint64(fs.Elems[0].Elem.Int64()),
 		Title: fs.Elems[1].Elem.String(),
 		Score: fs.Elems[2].Elem.Int64(),
 		Posts: posts,
@@ -60,7 +60,7 @@ func GetById(id uint64) (*Topic, error) {
 	}, nil
 }
 
-func Exists(id uint64) bool {
+func exists(id uint64) bool {
 	val, err := shared.RedisClient.Get(fmt.Sprintf("topic:%d:title", id))
 	if err != nil || val.String() == "" {
 		return false
@@ -68,7 +68,7 @@ func Exists(id uint64) bool {
 	return true
 }
 
-func Add(r *http.Request, u_id uint64) (uint64, error) {
+func add(r *http.Request, u_id uint64) (uint64, error) {
 	// get an id
 	ids, err := shared.NoeqClient.Gen(2)
 	if err != nil {
@@ -77,7 +77,7 @@ func Add(r *http.Request, u_id uint64) (uint64, error) {
 	t_id := ids[0]
 	p_id := ids[1]
 	ts := strconv.FormatInt(time.Now().Unix(), 10)
-	
+
 	// get the data
 	ds_id := r.FormValue("d_id")
 	title := r.FormValue("title")
@@ -95,12 +95,12 @@ func Add(r *http.Request, u_id uint64) (uint64, error) {
 
 	// add to solr
 	var ps []interface{}
-	p := &shared.PostDoc {
-		Id: p_id,
-		DId: d_id,
-		TId: t_id,
+	p := &shared.PostDoc{
+		Id:    p_id,
+		DId:   d_id,
+		TId:   t_id,
 		Title: title,
-		Post: post,
+		Post:  post,
 	}
 	ps = append(ps, p)
 	_, err = shared.SolrPosts.Update(ps)
@@ -116,15 +116,15 @@ func Add(r *http.Request, u_id uint64) (uint64, error) {
 
 	var topicData = make(map[string]string)
 	topicData[fmt.Sprintf("topic:%d:d_id", t_id)] = ds_id
-	topicData[fmt.Sprintf("topic:%d:u_id", t_id)] = strconv.FormatUint(u_id , 10)
+	topicData[fmt.Sprintf("topic:%d:u_id", t_id)] = strconv.FormatUint(u_id, 10)
 	topicData[fmt.Sprintf("topic:%d:last_u_id", t_id)] = strconv.FormatUint(u_id, 10)
 	topicData[fmt.Sprintf("topic:%d:title", t_id)] = title
 	topicData[fmt.Sprintf("topic:%d:last_p_id", t_id)] = strconv.FormatUint(p_id, 10)
 	topicData[fmt.Sprintf("topic:%d:lastpost", t_id)] = ts
 	topicData[fmt.Sprintf("topic:%d:score", t_id)] = "1000"
 	topicData[fmt.Sprintf("post:%d:d_id", p_id)] = ds_id
-	topicData[fmt.Sprintf("post:%d:t_id", p_id)] = strconv.FormatUint(t_id , 10)
-	topicData[fmt.Sprintf("post:%d:u_id", p_id)] = strconv.FormatUint(u_id , 10)
+	topicData[fmt.Sprintf("post:%d:t_id", p_id)] = strconv.FormatUint(t_id, 10)
+	topicData[fmt.Sprintf("post:%d:u_id", p_id)] = strconv.FormatUint(u_id, 10)
 	topicData[fmt.Sprintf("post:%d:post", p_id)] = post
 	topicData[fmt.Sprintf("post:%d:ts", p_id)] = ts
 	topicData[fmt.Sprintf("post:%d:score", p_id)] = "1000"

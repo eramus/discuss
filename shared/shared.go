@@ -17,11 +17,11 @@ import (
 const pageTitle = `{{define "pagetitle"}}%s{{end}}`
 
 var (
-	RedisClient	*godis.Client
-	NoeqClient	*noeq.Client
-	SolrDiscuss	= solr.New("localhost", 8080, "discuss")
-	SolrPosts	= solr.New("localhost", 8080, "posts")
-	Templates	= []string{
+	RedisClient *godis.Client
+	NoeqClient  *noeq.Client
+	SolrDiscuss = solr.New("localhost", 8080, "discuss")
+	SolrPosts   = solr.New("localhost", 8080, "posts")
+	Templates   = []string{
 		"./templates/wrapper.tpl",
 		"./templates/header.tpl",
 		"./templates/body.tpl",
@@ -31,52 +31,52 @@ var (
 
 type Page struct {
 	Header string
-	Body *Body
+	Body   *Body
 	Footer string
 }
 
 type Body struct {
 	Breadcrumbs *Breadcrumbs
-	UserData *UserData
-	Subscribed *Subscribed
+	UserData    *UserData
+	Subscribed  *Subscribed
 	ContentData interface{}
-	Title string
-	Search string
-	NoSidebar bool
+	Title       string
+	Search      string
+	NoSidebar   bool
 }
 
 type Breadcrumbs struct {
-	Labels	[]string
-	Uris		[]string
+	Labels []string
+	Uris   []string
 }
 
 type Subscribed struct {
-	Labels	[]string
-	Uris		[]string
+	Labels []string
+	Uris   []string
 }
 
 type UserData struct {
-	Id			uint64
-	Username	string
+	Id       uint64
+	Username string
 }
 
 type DiscussionDoc struct {
-	Id			uint64	`json:"id"`
-	Uri			[]string	`json:"uri"`
-	Title			string 	`json:"title"`
-	Description	string	`json:"desc"`
-	Keywords	string	`json:"keywords"`
-	Subscribed	int64 	`json:"subscribed"`
-	Topics		int64 	`json:"topics"`
+	Id          uint64   `json:"id"`
+	Uri         []string `json:"uri"`
+	Title       string   `json:"title"`
+	Description string   `json:"desc"`
+	Keywords    string   `json:"keywords"`
+	Subscribed  int64    `json:"subscribed"`
+	Topics      int64    `json:"topics"`
 }
 
 type PostDoc struct {
-	Id		uint64	`json:"id"`
-	DId		uint64	`json:"d_id"`
-	TId		uint64	`json:"t_id"`
-	PId		uint64	`json:"p_id,omitempty"`
-	Title		string	`json:"title"`
-	Post	string	`json:"post"`
+	Id    uint64 `json:"id"`
+	DId   uint64 `json:"d_id"`
+	TId   uint64 `json:"t_id"`
+	PId   uint64 `json:"p_id,omitempty"`
+	Title string `json:"title"`
+	Post  string `json:"post"`
 }
 
 func init() {
@@ -86,16 +86,17 @@ func init() {
 	RedisClient = godis.New("", 0, "")
 	NoeqClient, err = noeq.New("", ":4444")
 	if err != nil {
-		log.Println ("failed to create noeq client", err)
+		log.Println("failed to create noeq client", err)
 		os.Exit(1)
 	}
 	_, err = NoeqClient.GenOne()
 	if err != nil {
-		log.Println ("failed to create noeq client", err)
+		log.Println("failed to create noeq client", err)
 		os.Exit(1)
 	}
 	requests = make(chan bool)
 	go countRequests()
+	go startSessions()
 }
 
 var requestCount int
@@ -134,7 +135,7 @@ func getSubscribed(sess *sessions.Session) *Subscribed {
 		t, _ := RedisClient.Get(fmt.Sprintf("discussion:%d:title", d))
 		u, _ := RedisClient.Get(fmt.Sprintf("discussion:%d:uri", d))
 		if t != nil && u != nil {
-			sub.Labels, sub.Uris = append(sub.Labels, t.String()), append(sub.Uris, "/discuss/" + u.String())
+			sub.Labels, sub.Uris = append(sub.Labels, t.String()), append(sub.Uris, "/discuss/"+u.String())
 		}
 	}
 	return sub
@@ -195,7 +196,7 @@ func uriTree(id uint64) (titles, uris []string) {
 	parts := strings.Split(uri.String(), "/")
 	if len(parts) <= 1 {
 		titles = append(titles, top_title)
-		uris = append(uris, "/discuss/" + top_uri)
+		uris = append(uris, "/discuss/"+top_uri)
 		return
 	}
 	for i := 1; i < len(parts); i++ {
@@ -214,11 +215,11 @@ func uriTree(id uint64) (titles, uris []string) {
 				return
 			}
 			titles = append(titles, title.String())
-			uris = append(uris, "/discuss/" + uri.String())
+			uris = append(uris, "/discuss/"+uri.String())
 		}
 	}
 	titles = append(titles, top_title)
-	uris = append(uris, "/discuss/" + top_uri)
+	uris = append(uris, "/discuss/"+top_uri)
 	return
 }
 
@@ -230,7 +231,7 @@ func GetPermission(id, o uint64) uint64 {
 
 func CanDo(id, o uint64, action int) bool {
 	key := fmt.Sprintf("user:%d:permission:%d", id, o)
-	e, _  := RedisClient.Exists(key)
+	e, _ := RedisClient.Exists(key)
 	if !e {
 		// set the default
 		d, _ := RedisClient.Get(fmt.Sprintf("permission:%d", o))

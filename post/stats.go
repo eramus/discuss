@@ -2,15 +2,15 @@ package post
 
 import (
 	"fmt"
-//	"log"
+	//	"log"
 
 	"discuss/shared"
 )
 
 type score struct {
-	uid	uint64
-	pid	uint64
-	up	bool
+	uid uint64
+	pid uint64
+	up  bool
 }
 
 var postVotes chan score
@@ -29,16 +29,16 @@ func handleScores() {
 	}
 }
 
-func BumpPost(u_id, p_id  uint64) {
+func bumpPost(u_id, p_id uint64) {
 	postVotes <- score{u_id, p_id, true}
 }
 
-func BuryPost(u_id, p_id uint64) {
+func buryPost(u_id, p_id uint64) {
 	postVotes <- score{u_id, p_id, false}
 }
 
 func scorePost(ids score) {
-//	log.Println("score post:", ids)
+	//	log.Println("score post:", ids)
 	keys := make([]string, 2)
 	keys[0] = fmt.Sprintf("post:%d:t_id", ids.pid)
 	keys[1] = fmt.Sprintf("post:%d:p_id", ids.pid)

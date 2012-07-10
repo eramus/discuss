@@ -15,14 +15,14 @@ import (
 )
 
 func Subscribe(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
-//	log.Println("route: subscribe")
+	//	log.Println("route: subscribe")
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
 	if len(parts) < 2 {
 		redirect = "/"
 		return
 	}
 	id, _ := strconv.ParseUint(parts[2], 10, 64)
-	if !Exists(id) {
+	if !exists(id) {
 		redirect = "/"
 		return
 	}
@@ -38,14 +38,14 @@ func Subscribe(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl 
 }
 
 func Unsubscribe(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
-//	log.Println("route: unsubscribe")
+	//	log.Println("route: unsubscribe")
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
 	if len(parts) < 2 {
 		redirect = "/"
 		return
 	}
 	id, _ := strconv.ParseUint(parts[2], 10, 64)
-	if !Exists(id) {
+	if !exists(id) {
 		redirect = "/"
 		return
 	}
@@ -61,7 +61,7 @@ func Unsubscribe(r *http.Request, sess *sessions.Session) (body *shared.Body, tp
 }
 
 func Bump(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
-//	log.Println("route: bump topic")
+	//	log.Println("route: bump topic")
 	var u_id = sess.Values["id"].(uint64)
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
 	if len(parts) < 3 {
@@ -69,7 +69,7 @@ func Bump(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *temp
 		return
 	}
 	id, _ := strconv.ParseUint(parts[2], 10, 64)
-	if !Exists(id) {
+	if !exists(id) {
 		redirect = "/"
 		return
 	}
@@ -85,12 +85,12 @@ func Bump(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *temp
 		// already voted
 		return
 	}
-	go BumpThread(u_id, id, uint64(de.Int64()))
+	go bumpTopic(u_id, id, uint64(de.Int64()))
 	return
 }
 
 func Bury(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
-//	log.Println("route: bury topic")
+	//	log.Println("route: bury topic")
 	var u_id = sess.Values["id"].(uint64)
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
 	if len(parts) < 3 {
@@ -98,7 +98,7 @@ func Bury(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *temp
 		return
 	}
 	id, _ := strconv.ParseUint(parts[2], 10, 64)
-	if !Exists(id) {
+	if !exists(id) {
 		redirect = "/"
 		return
 	}
@@ -114,12 +114,12 @@ func Bury(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *temp
 		// already voted
 		return
 	}
-	go BuryThread(u_id, id, uint64(de.Int64()))
+	go buryTopic(u_id, id, uint64(de.Int64()))
 	return
 }
 
 func AddTopic(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
-//	log.Println("route: add topic")
+	//	log.Println("route: add topic")
 	var u_id = sess.Values["id"].(uint64)
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
 	if len(parts) < 2 {
@@ -135,11 +135,11 @@ func AddTopic(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *
 	}
 	d_id := uint64(res.Int64())
 	if r.Method != "POST" {
-		body, tpl = AddForm(r, d_id, parts)
+		body, tpl = addForm(r, d_id, parts)
 	} else {
-		id, err := Add(r, u_id)
+		id, err := add(r, u_id)
 		if err != nil {
-			body, tpl = AddForm(r, d_id, parts)
+			body, tpl = addForm(r, d_id, parts)
 		} else {
 			redirect = fmt.Sprintf("/topic/%d/", id)
 		}
@@ -148,7 +148,7 @@ func AddTopic(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *
 }
 
 func ViewTopic(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
-//	log.Println("route: view topic")
+	//	log.Println("route: view topic")
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
 	if len(parts) < 2 {
 		redirect = "/"
@@ -159,18 +159,18 @@ func ViewTopic(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl 
 		redirect = "/"
 		return
 	}
-	if !Exists(id) {
+	if !exists(id) {
 		redirect = "/"
 		return
 	}
-	t, err := GetById(id)
+	t, err := getById(id)
 	body = new(shared.Body)
 	labels, uris := shared.GetTopicBreadcrumbs(t.Id)
 	labels, uris = append(labels, t.Title), append(uris, "")
 	body.Breadcrumbs = &shared.Breadcrumbs{labels, uris}
 	body.ContentData = t
 	body.Title = t.Title
-	go AddThreadView(t.DId, t.Id)
+	go addView(t.DId, t.Id)
 	tpl, _ = viewTpls.Clone()
 	tpl.Parse(shared.GetPageTitle(t.Title))
 	return

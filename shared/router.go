@@ -14,20 +14,20 @@ type requestHandler func(*http.Request, *sessions.Session) (*Body, *template.Tem
 type responseHandler func(http.ResponseWriter, *http.Request, *sessions.Session) error
 
 type route struct {
-	flat			string
-	regex		*regexp.Regexp
-	request		requestHandler
-	response	responseHandler
-	requireLogin	bool
+	flat         string
+	regex        *regexp.Regexp
+	request      requestHandler
+	response     responseHandler
+	requireLogin bool
 }
 
 type Router struct {
-	routes		[]route
-	flatRoutes	[]route
-	staticRoutes	[]*regexp.Regexp
-	notFound	requestHandler
-	auth		requestHandler
-	profilier		*regexp.Regexp
+	routes       []route
+	flatRoutes   []route
+	staticRoutes []*regexp.Regexp
+	notFound     requestHandler
+	auth         requestHandler
+	profilier    *regexp.Regexp
 }
 
 func (r *Router) AddProfilier() {
@@ -75,7 +75,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// check for static routes first
 	for _, rt := range r.staticRoutes {
 		if rt.MatchString(req.URL.Path) {
-			http.ServeFile(w, req, "./static" + req.URL.Path)
+			http.ServeFile(w, req, "./static"+req.URL.Path)
 			return
 		}
 	}
@@ -98,7 +98,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 	for _, rt := range r.flatRoutes {
-		if req.URL.Path == rt.flat || req.URL.Path == rt.flat + "/" {
+		if req.URL.Path == rt.flat || req.URL.Path == rt.flat+"/" {
 			reqhandler = rt.request
 			respHandler = rt.response
 			if !rt.requireLogin {
@@ -135,7 +135,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	body, tpl, redirect := reqhandler(req, sess)
 	visited(sess)
-//	sess.AddFlash(req.URL.Path, "last")
+	//	sess.AddFlash(req.URL.Path, "last")
 	if respHandler != nil {
 		log.Println("run callback")
 		respHandler(w, req, sess)

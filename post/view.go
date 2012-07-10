@@ -9,29 +9,29 @@ import (
 )
 
 var addTpls = template.Must(template.ParseFiles(
-		append(shared.Templates, "./templates/post/form.tpl")...
+	append(shared.Templates, "./templates/post/form.tpl")...,
 ))
 
 type Post struct {
-	Id uint64
-	TId uint64
-	UId uint64
-	Username string
-	Post string
-	Posts []*Post
-	Timestamp uint64
-	FTimestamp	string
-	RTimestamp	string
-	Score int64
+	Id         uint64
+	TId        uint64
+	UId        uint64
+	Username   string
+	Post       string
+	Posts      []*Post
+	Timestamp  uint64
+	FTimestamp string
+	RTimestamp string
+	Score      int64
 }
 
 type Form struct {
-	TId		uint64
-	PId		uint64
-	Post	string
+	TId  uint64
+	PId  uint64
+	Post string
 }
 
-func AddForm(r *http.Request, t_id, p_id uint64) (body *shared.Body, tpl *template.Template) {
+func addForm(r *http.Request, t_id, p_id uint64) (body *shared.Body, tpl *template.Template) {
 	t, rerr := shared.RedisClient.Get(fmt.Sprintf("topic:%d:title", t_id))
 	if rerr != nil {
 		return
@@ -43,7 +43,7 @@ func AddForm(r *http.Request, t_id, p_id uint64) (body *shared.Body, tpl *templa
 		labels, uris = append(labels, t.String()), append(uris, fmt.Sprintf("/topic/%d", t_id))
 	}
 	labels, uris = append(labels, "Add Post"), append(uris, "")
-	
+
 	body = new(shared.Body)
 	f := new(Form)
 	f.TId = t_id

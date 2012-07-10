@@ -8,25 +8,25 @@ import (
 	"strings"
 
 	"github.com/simonz05/godis"
-			
+
 	. "discuss/shared"
 	"discuss/topic"
 )
 
 const (
-	VIEW = iota		// 0
-	BANNED			// 1
-	UPDATE			// 2
-	MODERATE		// 3
-	ADD_TOPIC		// 4
-	UPDATE_TOPIC	// 5
-	DELETE_TOPIC	// 6
-	ADD_POST		// 7
-	UPDATE_POST	// 8
-	DELETE_POST	// 9
+	VIEW         = iota // 0
+	BANNED              // 1
+	UPDATE              // 2
+	MODERATE            // 3
+	ADD_TOPIC           // 4
+	UPDATE_TOPIC        // 5
+	DELETE_TOPIC        // 6
+	ADD_POST            // 7
+	UPDATE_POST         // 8
+	DELETE_POST         // 9
 )
 
-func GetId(uri string) (uint64, error) {
+func getId(uri string) (uint64, error) {
 	e, err := RedisClient.Get("discussions:" + uri)
 	if err != nil {
 		return 0, err
@@ -39,7 +39,7 @@ func GetId(uri string) (uint64, error) {
 	return 0, nil
 }
 
-func GetUri(id uint64) (string, error) {
+func getUri(id uint64) (string, error) {
 	ie, rerr := RedisClient.Get(fmt.Sprintf("discussion:%d:uri", id))
 	if rerr != nil {
 		return "", rerr
@@ -47,7 +47,7 @@ func GetUri(id uint64) (string, error) {
 	return ie.String(), nil
 }
 
-func Add(r *http.Request, u_id uint64) (uint64, error) {
+func add(r *http.Request, u_id uint64) (uint64, error) {
 	// get an id
 	id, err := NoeqClient.GenOne()
 	if err != nil {
@@ -63,23 +63,23 @@ func Add(r *http.Request, u_id uint64) (uint64, error) {
 		keywords = uri
 	}
 	// try to set it
-	res, rerr := RedisClient.Setnx("discussions:" + uri, id)
+	res, rerr := RedisClient.Setnx("discussions:"+uri, id)
 	if rerr != nil {
 		log.Println("redis err", rerr)
 		return 0, rerr
 	} else if !res {
 		// someone beat us to it
 		log.Println("exists err", err)
-		return GetId(uri)
+		return getId(uri)
 	}
 	// add to solr
 	ds := make([]interface{}, 1)
-	ds[1] = &DiscussionDoc {
-		Id: id,
-		Uri: strings.Split(uri, "/"),
-		Title: title,
+	ds[1] = &DiscussionDoc{
+		Id:          id,
+		Uri:         strings.Split(uri, "/"),
+		Title:       title,
 		Description: description,
-		Keywords: keywords,
+		Keywords:    keywords,
 	}
 	_, err = SolrDiscuss.Update(ds)
 	if err != nil {
@@ -123,7 +123,7 @@ func Add(r *http.Request, u_id uint64) (uint64, error) {
 	return id, nil
 }
 
-func Topics(id uint64) ([]*topic.Topic, error) {
+func topics(id uint64) ([]*topic.Topic, error) {
 	ts, err := RedisClient.Zrevrangebyscore(fmt.Sprintf("discussion:%d:topics", id), 10000, 800, "limit", "0", "10")
 	if err != nil {
 		return nil, err
@@ -149,14 +149,14 @@ func Topics(id uint64) ([]*topic.Topic, error) {
 			return nil, rerr
 		}
 		t := &topic.Topic{
-			Id: t_id,
-			DId: id,
-			Title: fs.Elems[0].Elem.String(),
-			LastPost: FormatTime(fs.Elems[1].Elem.Int64()),
+			Id:         t_id,
+			DId:        id,
+			Title:      fs.Elems[0].Elem.String(),
+			LastPost:   FormatTime(fs.Elems[1].Elem.Int64()),
 			LastPostId: uint64(fs.Elems[2].Elem.Int64()),
-			NumPosts: fs.Elems[5].Elem.Int64(),
-			Score: fs.Elems[6].Elem.Int64(),
-			Users: uc,
+			NumPosts:   fs.Elems[5].Elem.Int64(),
+			Score:      fs.Elems[6].Elem.Int64(),
+			Users:      uc,
 		}
 		topics[i] = t
 	}

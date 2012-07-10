@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"html"
 	"html/template"
-//	"log"
+	//	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -15,7 +15,7 @@ import (
 )
 
 func Bump(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
-//	log.Println("route: bump post")
+	//	log.Println("route: bump post")
 	var u_id = sess.Values["id"].(uint64)
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
 	if len(parts) < 3 {
@@ -32,12 +32,12 @@ func Bump(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *temp
 		// already voted
 		return
 	}
-	go BumpPost(u_id, id)
+	go bumpPost(u_id, id)
 	return
 }
 
 func Bury(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
-//	log.Println("route: bury post")
+	//	log.Println("route: bury post")
 	var u_id = sess.Values["id"].(uint64)
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
 	if len(parts) < 3 {
@@ -54,12 +54,12 @@ func Bury(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *temp
 		// already voted
 		return
 	}
-	go BuryPost(u_id, id)
+	go buryPost(u_id, id)
 	return
 }
 
 func AddPost(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *template.Template, redirect string) {
-//	log.Println("route: add post")
+	//	log.Println("route: add post")
 	var u_id = sess.Values["id"].(uint64)
 	parts := strings.Split(html.EscapeString(r.URL.Path[1:]), "/")
 	if len(parts) < 2 {
@@ -72,11 +72,11 @@ func AddPost(r *http.Request, sess *sessions.Session) (body *shared.Body, tpl *t
 		p_id, _ = strconv.ParseUint(parts[3], 10, 64)
 	}
 	if r.Method != "POST" {
-		body, tpl = AddForm(r, t_id, p_id)
+		body, tpl = addForm(r, t_id, p_id)
 	} else {
-		id, err := Add(r, u_id)
+		id, err := add(r, u_id)
 		if err != nil {
-			body, tpl = AddForm(r, t_id, p_id)
+			body, tpl = addForm(r, t_id, p_id)
 		} else {
 			redirect = fmt.Sprintf("/topic/%d#%d", t_id, id)
 		}

@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/simonz05/godis"	
+	"github.com/simonz05/godis"
 
 	. "discuss/shared"
 )
@@ -47,20 +47,20 @@ func GetById(id, t_id uint64, lvl int) (*Post, error) {
 		}
 	}
 	return &Post{
-		Id: id,
-		TId: t_id,
-		UId: uint64(fs.Elems[1].Elem.Int64()),
-		Username: ue.String(),
-		Post: fs.Elems[0].Elem.String(),
-		Posts: posts,
-		Timestamp: uint64(fs.Elems[2].Elem.Int64()),
+		Id:         id,
+		TId:        t_id,
+		UId:        uint64(fs.Elems[1].Elem.Int64()),
+		Username:   ue.String(),
+		Post:       fs.Elems[0].Elem.String(),
+		Posts:      posts,
+		Timestamp:  uint64(fs.Elems[2].Elem.Int64()),
 		FTimestamp: time.Unix(fs.Elems[2].Elem.Int64(), 0).Format("January 01, 2006 @ 15:04"),
 		RTimestamp: FormatTime(fs.Elems[2].Elem.Int64()),
-		Score: fs.Elems[3].Elem.Int64(),
+		Score:      fs.Elems[3].Elem.Int64(),
 	}, nil
 }
 
-func Add(r *http.Request, u_id uint64) (uint64, error) {
+func add(r *http.Request, u_id uint64) (uint64, error) {
 	// get an id
 	id, err := NoeqClient.GenOne()
 	if err != nil {
@@ -98,10 +98,10 @@ func Add(r *http.Request, u_id uint64) (uint64, error) {
 	d_id := uint64(de.Int64())
 	// add to solr
 	var ps []interface{}
-	p := &PostDoc {
-		Id: id,
-		DId: d_id,
-		TId: t_id,
+	p := &PostDoc{
+		Id:   id,
+		DId:  d_id,
+		TId:  t_id,
 		Post: post,
 	}
 	if p_id != 0 {
@@ -125,7 +125,7 @@ func Add(r *http.Request, u_id uint64) (uint64, error) {
 	postData[fmt.Sprintf("topic:%d:lastpost", t_id)] = ts
 	postData[fmt.Sprintf("post:%d:d_id", id)] = de.String()
 	postData[fmt.Sprintf("post:%d:t_id", id)] = ts_id
-	postData[fmt.Sprintf("post:%d:u_id", id)] = strconv.FormatUint(u_id , 10)
+	postData[fmt.Sprintf("post:%d:u_id", id)] = strconv.FormatUint(u_id, 10)
 	postData[fmt.Sprintf("post:%d:post", id)] = post
 	postData[fmt.Sprintf("post:%d:ts", id)] = ts
 	postData[fmt.Sprintf("post:%d:score", id)] = "1000"

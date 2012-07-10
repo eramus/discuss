@@ -3,30 +3,30 @@ package user
 import (
 	"html/template"
 	"net/http"
-	
+
 	"discuss/shared"
 )
 
 var registerTpls = template.Must(template.ParseFiles(
-		append(shared.Templates, "./templates/user/register.tpl")...
+	append(shared.Templates, "./templates/user/register.tpl")...,
 ))
 var loginTpls = template.Must(template.ParseFiles(
-		append(shared.Templates, "./templates/user/login.tpl")...
+	append(shared.Templates, "./templates/user/login.tpl")...,
 ))
 var profileTpls = template.Must(template.ParseFiles(
-		append(shared.Templates, "./templates/user/profile.tpl")...
+	append(shared.Templates, "./templates/user/profile.tpl")...,
 ))
 var feedTpls = template.Must(template.ParseFiles(
-		append(shared.Templates, "./templates/user/feed.tpl")...
+	append(shared.Templates, "./templates/user/feed.tpl")...,
 ))
 
-type Form  struct {
-	Username	string
-	Email		string
-	Remember	string
+type Form struct {
+	Username string
+	Email    string
+	Remember string
 }
 
-func RegisterForm(r *http.Request) (body *shared.Body, tpl *template.Template) {
+func registerForm(r *http.Request) (body *shared.Body, tpl *template.Template) {
 	body = new(shared.Body)
 	if r.Method == "POST" {
 		f := new(Form)
@@ -35,9 +35,9 @@ func RegisterForm(r *http.Request) (body *shared.Body, tpl *template.Template) {
 
 		body.ContentData = f
 	}
-	body.Breadcrumbs = &shared.Breadcrumbs {
+	body.Breadcrumbs = &shared.Breadcrumbs{
 		Labels: []string{"Register"},
-		Uris: []string{""},
+		Uris:   []string{""},
 	}
 	body.Title = "Register"
 	tpl, _ = registerTpls.Clone()
@@ -45,7 +45,7 @@ func RegisterForm(r *http.Request) (body *shared.Body, tpl *template.Template) {
 	return
 }
 
-func LoginForm(r *http.Request) (body *shared.Body, tpl *template.Template) {
+func loginForm(r *http.Request) (body *shared.Body, tpl *template.Template) {
 	body = new(shared.Body)
 	if r.Method == "POST" {
 		f := new(Form)
@@ -54,9 +54,9 @@ func LoginForm(r *http.Request) (body *shared.Body, tpl *template.Template) {
 
 		body.ContentData = f
 	}
-	body.Breadcrumbs = &shared.Breadcrumbs {
+	body.Breadcrumbs = &shared.Breadcrumbs{
 		Labels: []string{"Login"},
-		Uris: []string{""},
+		Uris:   []string{""},
 	}
 	body.Title = "Login"
 	tpl, _ = loginTpls.Clone()
@@ -64,7 +64,7 @@ func LoginForm(r *http.Request) (body *shared.Body, tpl *template.Template) {
 	return
 }
 
-func ProfilePage() (body *shared.Body, tpl *template.Template) {
+func profilePage() (body *shared.Body, tpl *template.Template) {
 	body = new(shared.Body)
 	body.Title = "Profile"
 	tpl, _ = profileTpls.Clone()
@@ -72,7 +72,7 @@ func ProfilePage() (body *shared.Body, tpl *template.Template) {
 	return
 }
 
-func FeedPage() (body *shared.Body, tpl *template.Template) {
+func feedPage() (body *shared.Body, tpl *template.Template) {
 	body = new(shared.Body)
 	body.NoSidebar = true
 	body.Title = "Feed"
