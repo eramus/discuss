@@ -30,3 +30,4 @@ noeqd -- https://github.com/bmizerany/noeqd
 
 solr -- http://lucene.apache.org/solr/ (hmm need my config too.. maybe later -- or look at the source and you can figure it out)
 
+bootstrap -- http://twitter.github.com/bootstrap
